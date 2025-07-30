@@ -191,11 +191,11 @@
     // Importa los módulos de Firebase que usarás
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
-
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebase/10.4.0/firebase-auth.js"; // URL corregida
+    
     // ** TU CONFIGURACIÓN DE FIREBASE (YA INSERTADA) **
     const firebaseConfig = {
-      apiKey: "AIzaSyAs19oiYivPYSCl_-xcOFeBQMziZSeBn0",
+      apiKey: "AIzaSyAs19oiYivPYSCl_-xcOFeBQMziZSeBn0", // VERIFICA ESTA CLAVE CON TU CONSOLA DE FIREBASE
       authDomain: "comunibetstudio.firebaseapp.com",
       projectId: "comunibetstudio",
       storageBucket: "comunibetstudio.firebasestorage.app",
@@ -225,21 +225,16 @@
     window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
     window.signInWithEmailAndPassword = signInWithEmailAndPassword;
     window.signOut = signOut;
-
-    // ** onAuthStateChanged se define aquí y es globalmente accesible **
-    // MUEVE ESTE BLOQUE COMPLETO AQUÍ AFUERA, FUERA DEL "window."
-    window.onAuthStateChangedFirebase = onAuthStateChanged; // Renombrado para evitar conflictos
-
+    window.onAuthStateChangedListener = onAuthStateChanged; // Renombrado para evitar conflictos
   </script>
   <script>
-    // ** Variables y lógica de autenticación (¡MODIFICADO PARA FIREBASE!) **
-    let usuarioActual = null; // Ahora almacenará el NOMBRE DE USUARIO, no el email
-    let usuarioAuthId = null; // Almacenará el UID de Firebase Auth
-    let likes = new Map(); // Para rastrear likes/dislikes LOCALES del usuario
+    // ** Variables y lógica de autenticación **
+    let usuarioActual = null;
+    let usuarioAuthId = null;
+    let likes = new Map();
 
     // Escucha cambios en el estado de autenticación de Firebase
-    // USA la función globalmente accesible
-    onAuthStateChangedFirebase(auth, async (user) => { // CAMBIADO a onAuthStateChangedFirebase
+    onAuthStateChangedListener(auth, async (user) => { // Usamos la variable global renombrada
       if (user) {
         console.log("onAuthStateChanged: Usuario autenticado. UID:", user.uid);
         usuarioAuthId = user.uid;
@@ -247,34 +242,28 @@
         const userName = await getUserNameByUid(user.uid);
         if (userName) {
           console.log("onAuthStateChanged: Nombre de usuario encontrado:", userName);
-          usuarioActual = userName; // Establece el nombre de usuario
-          mostrarSeccion('foro'); // Muestra el foro automáticamente
-          document.getElementById('main-menu').style.display = 'flex'; // Muestra el menú principal
-          document.getElementById('registro').style.display = 'none'; // Oculta el registro
-          document.getElementById('login').style.display = 'none'; // Oculta el login
-          document.getElementById('nombrePerfil').textContent = userName; // Muestra el nombre de usuario en el perfil
-          cargarPublicaciones(); // Carga las publicaciones desde la base de datos
+          usuarioActual = userName;
+          mostrarSeccion('foro');
+          document.getElementById('main-menu').style.display = 'flex';
+          document.getElementById('registro').style.display = 'none';
+          document.getElementById('login').style.display = 'none';
+          document.getElementById('nombrePerfil').textContent = userName;
+          cargarPublicaciones();
         } else {
           console.warn("onAuthStateChanged: Usuario autenticado pero nombre de usuario NO ENCONTRADO en Firestore.");
           alert("Error: Nombre de usuario no encontrado en la base de datos. Por favor, asegúrate de haberte registrado correctamente o contacta al soporte.");
-          signOut(auth); // Forzar cierre de sesión
+          signOut(auth);
         }
-
       } else {
         console.log("onAuthStateChanged: No hay usuario autenticado.");
-        // Usuario no logueado
         usuarioActual = null;
         usuarioAuthId = null;
-        // Reinicia las secciones, muestra solo login/registro
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-        document.getElementById('login').classList.add('active'); // Por defecto, muestra login
-        document.getElementById('main-menu').style.display = 'none'; // Oculta el menú principal
-
-        // Asegúrate de que registro y login sean los únicos visibles al principio
+        document.getElementById('login').classList.add('active');
+        document.getElementById('main-menu').style.display = 'none';
         document.getElementById('registro').style.display = 'block';
         document.getElementById('login').style.display = 'block';
 
-        // Oculta el que no está activo inicialmente
         if (document.getElementById('registro').classList.contains('active')) {
             document.getElementById('login').style.display = 'none';
         } else {
@@ -287,22 +276,19 @@
     async function checkIfUserNameExists(username) {
         const q = query(collection(db, "usuarios"), where("userName", "==", username));
         const querySnapshot = await getDocs(q);
-        return !querySnapshot.empty; // Retorna true si ya existe
+        return !querySnapshot.empty;
     }
 
     async function getUserNameByUid(uid) {
-        // Ahora buscamos el documento donde el campo 'uid' coincide con el UID del usuario autenticado
         const q = query(collection(db, "usuarios"), where("uid", "==", uid));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
-            // Debería haber solo un documento por UID, tomamos el primero
             return querySnapshot.docs[0].data().userName;
         }
         return null;
     }
 
-
-    // ** Funciones de UI y Lógica NO relacionadas directamente con Firebase (mantienen su función original) **
+    // ** Funciones de UI y Lógica NO relacionadas directamente con Firebase **
     function toggleModo() {
       document.body.classList.toggle('light');
     }
@@ -310,28 +296,25 @@
     function mostrarSeccion(id) {
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
       document.getElementById(id).classList.add('active');
-      // Asegura que las secciones de autenticación se oculten cuando se navega a otra parte
       if (id !== 'login' && id !== 'registro') {
           document.getElementById('registro').style.display = 'none';
           document.getElementById('login').style.display = 'none';
       }
     }
 
-    // Funciones para alternar entre Login y Registro si NO está logueado
     function mostrarLoginScreen() {
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
       document.getElementById('login').classList.add('active');
-      document.getElementById('registro').style.display = 'none'; // Asegura que registro se oculte
-      document.getElementById('login').style.display = 'block'; // Asegura que login se muestre
+      document.getElementById('registro').style.display = 'none';
+      document.getElementById('login').style.display = 'block';
     }
 
     function mostrarRegistroScreen() {
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
       document.getElementById('registro').classList.add('active');
-      document.getElementById('login').style.display = 'none'; // Asegura que login se oculte
-      document.getElementById('registro').style.display = 'block'; // Asegura que registro se muestre
+      document.getElementById('login').style.display = 'none';
+      document.getElementById('registro').style.display = 'block';
     }
-
 
     function verPerfil(nombre) {
       document.getElementById('nombrePerfil').textContent = nombre;
@@ -339,15 +322,15 @@
     }
 
     function mostrarNotificaciones() {
-      alert("No tienes nuevas notificaciones."); // Puedes expandir esto con Firebase si quieres
+      alert("No tienes nuevas notificaciones.");
     }
 
     function buscar(valor) {
-      alert("Buscando: " + valor); // Puedes implementar búsqueda en Firestore más adelante
+      alert("Buscando: " + valor);
     }
 
     function guardarDescripcion() {
-      alert("Descripción guardada"); // Necesitarías Firebase para persistir esto
+      alert("Descripción guardada");
     }
 
     function toggleSeguir() {
@@ -360,10 +343,9 @@
         btn.textContent = "Seguir";
         count.textContent = parseInt(count.textContent) - 1;
       }
-      // Necesitarías Firebase para persistir los seguidores
     }
 
-    // ** FUNCIONES DE AUTENTICACIÓN (¡MODIFICADO PARA FIREBASE Y NOMBRE DE USUARIO!) **
+    // ** FUNCIONES DE AUTENTICACIÓN **
     async function registrarse() {
         const email = document.getElementById('nuevoEmail').value;
         const contrasena = document.getElementById('nuevaContrasena').value;
@@ -374,7 +356,6 @@
             return;
         }
 
-        // 1. Verificar unicidad del nombre de usuario en Firestore
         const usernameExists = await checkIfUserNameExists(username);
         if (usernameExists) {
             alert("El nombre de usuario '" + username + "' ya está en uso. Por favor, elige otro.");
@@ -382,11 +363,9 @@
         }
 
         try {
-            // 2. Crear usuario en Firebase Authentication
             const userCredential = await createUserWithEmailAndPassword(auth, email, contrasena);
             const user = userCredential.user;
 
-            // 3. Guardar el nombre de usuario y UID en Firestore
             await addDoc(collection(db, "usuarios"), {
                 uid: user.uid,
                 userName: username,
@@ -394,17 +373,15 @@
                 createdAt: Date.now()
             });
 
-            // MODIFICACIÓN: Después de registrar, muestra la pantalla de inicio de sesión
             alert("Cuenta creada. Por favor, inicia sesión.");
             document.getElementById('nuevoEmail').value = '';
             document.getElementById('nuevaContrasena').value = '';
             document.getElementById('nuevoNombreUsuario').value = '';
-            mostrarLoginScreen(); // Redirige a la pantalla de login
+            mostrarLoginScreen();
 
         } catch (error) {
             const errorMessage = error.message;
             console.error("Error de registro:", error);
-            // Mensajes más amigables para errores comunes de Firebase Auth
             if (error.code === 'auth/email-already-in-use') {
                 alert("El correo electrónico ya está en uso. Por favor, usa otro o inicia sesión.");
             } else if (error.code === 'auth/invalid-email') {
@@ -427,16 +404,12 @@
       signInWithEmailAndPassword(auth, email, contrasena)
         .then((userCredential) => {
           console.log("iniciarSesion: Inicio de sesión exitoso en Firebase Auth.");
-          // Sesión iniciada. onAuthStateChanged lo manejará para mostrar el foro.
-          document.getElementById('usuario').value = ''; // Limpiar campo de email
-          document.getElementById('contrasena').value = ''; // Limpiar campo de contraseña
-          // Ya no necesitamos llamar a mostrarSeccion('foro') aquí
-          // onAuthStateChanged se encarga de eso después de obtener el nombre de usuario.
+          document.getElementById('usuario').value = '';
+          document.getElementById('contrasena').value = '';
         })
         .catch((error) => {
           const errorMessage = error.message;
           console.error("iniciarSesion: Error al intentar iniciar sesión:", error);
-          // Mensajes más amigables para errores comunes
           if (error.code === 'auth/invalid-email') {
               alert("El formato del correo electrónico es inválido.");
           } else if (error.code === 'auth/user-disabled') {
@@ -453,17 +426,13 @@
 
     function cerrarSesion() {
       signOut(auth).then(() => {
-        // Sesión cerrada. onAuthStateChanged lo manejará.
         alert("Sesión cerrada.");
       }).catch((error) => {
         console.error("Error al cerrar sesión:", error);
       });
     }
 
-
-    // ** FUNCIONES DE PUBLICACIONES Y COMENTARIOS (¡MODIFICADO PARA FIREBASE!) **
-
-    // Función auxiliar para crear el elemento DOM de un comentario (sin interacción con DB)
+    // ** FUNCIONES DE PUBLICACIONES Y COMENTARIOS **
     function crearElementoComentario(texto, autor, likes = 0, dislikes = 0) {
       const div = document.createElement('div');
       div.className = 'comment';
@@ -495,7 +464,7 @@
       const fecha = document.getElementById('fecha').value;
       const comentario = document.getElementById('comentario').value;
 
-      if (!partido || !apuesta || !hora || !fecha || !comentario) { // Corregido: !!fecha a !fecha
+      if (!partido || !apuesta || !hora || !fecha || !comentario) {
           alert("Por favor, completa todos los campos de la publicación.");
           return;
       }
@@ -632,7 +601,6 @@
       }
     }
 
-
     async function borrar(btn) {
       if (!usuarioActual) {
         alert("Debes iniciar sesión para borrar.");
@@ -733,7 +701,6 @@
         console.error("Error al cargar comentarios:", error);
       });
     }
-
 
     // ** FUNCIONES DE TOGGLE **
     function toggleComentariosPrincipales(btn) {
