@@ -1,35 +1,523 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Comunibet</title>
-  <link rel="stylesheet" href="css/style.css" />
-</head>
-<body>
-  <main>
-    <section id="foro">
-      <h1>Publicación principal</h1>
-      <p>Este es el contenido principal de la publicación en Comunibet.</p>
-      <button onclick="toggleComentarios()">Mostrar comentarios</button>
-      <div id="comentarios" style="display:none; margin-top:1em;">
-        <div class="comentario">
-          <strong>Usuario1:</strong> ¡Gran publicación!
-          <div class="respuestas">
-            <button onclick="toggleRespuestas(this)">Mostrar respuestas</button>
-            <div class="respuestas-contenido" style="display: none; margin-left: 1em;">
-              <p><strong>Usuario2:</strong> Totalmente de acuerdo</p>
-              <p><strong>Usuario3:</strong> Me gustó también</p>
-            </div>
-          </div>
-        </div>
-        <div class="comentario">
-          <strong>Usuario4:</strong> No estoy tan seguro...
-        </div>
-      </div>
-    </section>
-  </main>
 
-  <script src="js/script.js"></script>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comunibet</title>
+  <style>
+    :root {
+      --bg-color: #121212;
+      --text-color: #fff;
+      --header-color: #1e1e1e;
+      --nav-color: #333;
+      --button-bg: #444;
+      --accent-color: #1e90ff;
+    }
+
+    body.light {
+      --bg-color: #f5f5f5;
+      --text-color: #000;
+      --header-color: #e0e0e0;
+      --nav-color: #ccc;
+      --button-bg: #ddd;
+      --accent-color: #0077cc;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    header {
+      background-color: var(--header-color);
+      padding: 1rem;
+      text-align: center;
+      font-size: 2rem;
+      font-weight: bold;
+    }
+
+    nav {
+      background-color: var(--nav-color);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    nav button {
+      background-color: var(--button-bg);
+      color: var(--text-color);
+      border: none;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .section {
+      display: none;
+      padding: 1rem;
+    }
+
+    .active {
+      display: block;
+    }
+
+    .form-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-width: 300px;
+      margin: auto;
+    }
+
+    .form-section input,
+    .form-section textarea {
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+
+    .form-section button {
+      padding: 0.5rem;
+      font-size: 1rem;
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+    }
+
+    .post {
+      background-color: #222;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+
+    .comment-section {
+      margin-top: 1rem;
+    }
+
+    /* Estilo para los comentarios principales */
+    .comment {
+      background-color: #2b2b2b;
+      /* Un poco más oscuro que el fondo para destacarse */
+      padding: 0.8rem;
+      margin-bottom: 0.5rem;
+      border-radius: 4px;
+    }
+
+    /* Estilo para las respuestas anidadas */
+    .nested-comments {
+      margin-left: 2rem;
+      /* Indentación para las respuestas */
+      border-left: 2px solid #555;
+      /* Línea para indicar anidamiento */
+      padding-left: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    /* Ocultar elementos por defecto */
+    .hidden {
+      display: none;
+    }
+
+    .toggle-replies-button,
+    .toggle-comments-button {
+      background: none;
+      border: none;
+      color: var(--accent-color);
+      cursor: pointer;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+      padding: 0;
+      text-align: left;
+      /* Alinea el texto a la izquierda */
+      width: 100%;
+      /* Ocupa todo el ancho disponible */
+    }
+
+
+    .like-dislike button {
+      background: none;
+      border: none;
+      color: var(--accent-color);
+      cursor: pointer;
+      margin-right: 0.5rem;
+    }
+
+    .notification {
+      background-color: var(--button-bg);
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .edit-delete {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+    }
+
+    .edit-delete button {
+      margin-left: 5px;
+      font-size: 0.8rem;
+    }
+
+    .notification-icon {
+      position: relative;
+      margin-left: auto;
+      cursor: pointer;
+    }
+
+    .notification-icon span {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: red;
+      color: white;
+      border-radius: 50%;
+      padding: 2px 5px;
+      font-size: 0.7rem;
+    }
+
+    @media (max-width: 600px) {
+      nav {
+        flex-direction: column;
+      }
+    }
+  </style>
+  <script>
+    let usuarios = [];
+    let usuarioActual = null;
+    let likes = new Map(); // Para rastrear los likes/dislikes de cada usuario por elemento
+
+    function toggleModo() {
+      document.body.classList.toggle('light');
+    }
+
+    function mostrarSeccion(id) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      document.getElementById('main-menu').style.display = 'flex';
+    }
+
+    function mostrarLogin() {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById('login').classList.add('active');
+    }
+
+    function cerrarSesion() {
+      usuarioActual = null;
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById('login').classList.add('active');
+      document.getElementById('main-menu').style.display = 'none';
+    }
+
+    function registrarse() {
+      const nombre = document.getElementById('nuevoUsuario').value;
+      const contrasena = document.getElementById('nuevaContrasena').value;
+      if (usuarios.some(u => u.nombre === nombre)) {
+        alert("Este nombre de usuario ya está registrado.");
+        return;
+      }
+      usuarios.push({
+        nombre,
+        contrasena
+      });
+      alert("Cuenta creada. Ahora puedes iniciar sesión.");
+      mostrarLogin();
+    }
+
+    function iniciarSesion() {
+      const nombre = document.getElementById('usuario').value;
+      const contrasena = document.getElementById('contrasena').value;
+      const usuario = usuarios.find(u => u.nombre === nombre && u.contrasena === contrasena);
+      if (!usuario) {
+        alert("Usuario o contraseña incorrectos.");
+        return;
+      }
+      usuarioActual = nombre;
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById('foro').classList.add('active');
+      document.getElementById('main-menu').style.display = 'flex';
+      document.getElementById('nombrePerfil').textContent = usuarioActual;
+    }
+
+    function darLikeDislike(btn, tipo) {
+      const elemento = btn.closest('.post, .comment');
+      if (!elemento) return;
+
+      // Genera un ID único si el elemento aún no lo tiene
+      const elementoId = elemento.dataset.id || `el_${Math.random().toString(36).substr(2, 9)}`;
+      elemento.dataset.id = elementoId;
+
+      const key = `${usuarioActual}_${elementoId}`;
+      const estado = likes.get(key);
+
+      const likeBtn = elemento.querySelector('[onclick*="darLikeDislike(this, \'like\')"]');
+      const dislikeBtn = elemento.querySelector('[onclick*="darLikeDislike(this, \'dislike\')"]');
+
+      const likeSpan = likeBtn.querySelector('span');
+      const dislikeSpan = dislikeBtn.querySelector('span');
+
+      if (estado === tipo) { // Ya dio like/dislike del mismo tipo, lo quita
+        likes.delete(key);
+        const span = btn.querySelector('span');
+        span.textContent = parseInt(span.textContent) - 1;
+      } else {
+        // Si ya había un estado previo (like o dislike opuesto), lo remueve
+        if (estado === 'like') {
+          likeSpan.textContent = parseInt(likeSpan.textContent) - 1;
+        } else if (estado === 'dislike') {
+          dislikeSpan.textContent = parseInt(dislikeSpan.textContent) - 1;
+        }
+
+        likes.set(key, tipo);
+        const span = btn.querySelector('span');
+        span.textContent = parseInt(span.textContent) + 1;
+      }
+    }
+
+    function crearElementoComentario(texto, autor) {
+      const div = document.createElement('div');
+      div.className = 'comment';
+      // Asigna un ID único al comentario para el seguimiento de likes/dislikes
+      div.dataset.id = `com_${Math.random().toString(36).substr(2, 9)}`;
+      div.innerHTML = `
+          <strong>${autor}</strong>: ${texto}
+          <div class='like-dislike'>
+              <button onclick="darLikeDislike(this, 'like')">👍 <span>0</span></button>
+              <button onclick="darLikeDislike(this, 'dislike')">👎 <span>0</span></button>
+          </div>
+          <div class='comment-input-area'>
+              <textarea placeholder='Escribe una respuesta...'></textarea>
+              <button onclick='comentar(this)'>Responder</button>
+          </div>
+          <button class="toggle-replies-button" onclick="toggleRespuestas(this)" style="display:none;">Mostrar respuestas (0)</button>
+          <div class='nested-comments hidden'></div>
+      `;
+      return div;
+    }
+
+    function publicar() {
+      const partido = document.getElementById('partido').value;
+      const apuesta = document.getElementById('apuesta').value;
+      const hora = document.getElementById('hora').value;
+      const fecha = document.getElementById('fecha').value;
+      const comentario = document.getElementById('comentario').value;
+
+      const div = document.createElement('div');
+      div.className = 'post';
+      // Asigna un ID único a la publicación para el seguimiento de likes/dislikes
+      div.dataset.id = `pub_${Math.random().toString(36).substr(2, 9)}`;
+      div.innerHTML = `
+          <strong onclick="verPerfil('${usuarioActual}')" style="cursor:pointer;color:var(--accent-color)">${usuarioActual}</strong>: ${partido} - ${apuesta}<br>${fecha} ${hora}<br>${comentario}
+          <div class='like-dislike'>
+              <button onclick="darLikeDislike(this, 'like')">👍 <span>0</span></button>
+              <button onclick="darLikeDislike(this, 'dislike')">👎 <span>0</span></button>
+          </div>
+          <div class='comment-section'>
+              <textarea placeholder='Escribe un comentario...'></textarea>
+              <button onclick='comentar(this)'>Comentar</button>
+              <button class="toggle-comments-button" onclick="toggleComentariosPrincipales(this)">Mostrar comentarios (0)</button>
+              <div class='main-comments hidden'></div> 
+          </div>
+          <div class='edit-delete'><button onclick='borrar(this)'>🗑️</button></div>
+      `;
+      document.getElementById('publicaciones').prepend(div);
+
+      // Limpiar los campos después de publicar
+      document.getElementById('partido').value = '';
+      document.getElementById('apuesta').value = '';
+      document.getElementById('hora').value = '';
+      document.getElementById('fecha').value = '';
+      document.getElementById('comentario').value = '';
+    }
+
+    function comentar(btn) {
+      const texto = btn.previousElementSibling.value;
+      if (!texto) return;
+
+      // Determina si estamos comentando en una publicación o en otro comentario
+      const parentSection = btn.closest('.comment-section'); // Para publicaciones
+      const parentComment = btn.closest('.comment'); // Para comentarios anidados
+
+      let contenedorComentarios;
+      let toggleButton;
+
+      if (parentComment) { // Es una respuesta a un comentario
+        contenedorComentarios = parentComment.querySelector('.nested-comments');
+        toggleButton = parentComment.querySelector('.toggle-replies-button');
+      } else if (parentSection) { // Es un comentario principal de una publicación
+        contenedorComentarios = parentSection.querySelector('.main-comments');
+        toggleButton = parentSection.querySelector('.toggle-comments-button');
+      }
+
+      if (contenedorComentarios) {
+        const nuevoComentario = crearElementoComentario(texto, usuarioActual);
+        contenedorComentarios.appendChild(nuevoComentario);
+        btn.previousElementSibling.value = ''; // Limpiar el textarea
+
+        const numComments = contenedorComentarios.children.length;
+
+        if (toggleButton) {
+            // Asegura que el botón se muestre si hay comentarios
+            toggleButton.style.display = 'block';
+
+            // Si es la sección de comentarios principales de una publicación:
+            if (contenedorComentarios.classList.contains('main-comments')) {
+                // Siempre muestra "Mostrar comentarios" y oculta el contenedor al añadir uno
+                contenedorComentarios.classList.add('hidden');
+                toggleButton.textContent = `Mostrar comentarios (${numComments})`;
+            } else { // Para respuestas anidadas:
+                // Si el contenedor de respuestas anidadas está oculto, actualiza el contador
+                if (contenedorComentarios.classList.contains('hidden')) {
+                    toggleButton.textContent = `Mostrar respuestas (${numComments})`;
+                } else { // Si no está oculto, lo muestra y actualiza el contador
+                    toggleButton.textContent = `Ocultar respuestas (${numComments})`;
+                }
+            }
+        }
+      }
+    }
+
+    function borrar(btn) {
+      const post = btn.closest('.post');
+      // Encontrar el elemento <strong> más cercano dentro del post para obtener el autor
+      const autorElement = post.querySelector('strong');
+      if (!autorElement) {
+        alert("No se pudo determinar el autor de la publicación.");
+        return;
+      }
+      const autor = autorElement.textContent;
+
+      if (autor !== usuarioActual) {
+        alert("Solo puedes borrar tus propias publicaciones.");
+        return;
+      }
+      post.remove();
+    }
+
+    function verPerfil(nombre) {
+      document.getElementById('nombrePerfil').textContent = nombre;
+      mostrarSeccion('perfil');
+    }
+
+    function mostrarNotificaciones() {
+      alert("No tienes nuevas notificaciones.");
+    }
+
+    function buscar(valor) {
+      alert("Buscando: " + valor);
+    }
+
+    function guardarDescripcion() {
+      alert("Descripción guardada");
+    }
+
+    function toggleSeguir() {
+      const btn = document.getElementById("btnSeguir");
+      const count = document.getElementById("contadorSeguidores");
+      if (btn.textContent === "Seguir") {
+        btn.textContent = "Siguiendo";
+        count.textContent = parseInt(count.textContent) + 1;
+      } else {
+        btn.textContent = "Seguir";
+        count.textContent = parseInt(count.textContent) - 1;
+      }
+    }
+
+    function toggleComentariosPrincipales(btn) {
+      const post = btn.closest('.post');
+      const mainCommentsDiv = post.querySelector('.main-comments');
+      if (mainCommentsDiv.classList.contains('hidden')) {
+        mainCommentsDiv.classList.remove('hidden');
+        btn.textContent = `Ocultar comentarios (${mainCommentsDiv.children.length})`;
+      } else {
+        mainCommentsDiv.classList.add('hidden');
+        btn.textContent = `Mostrar comentarios (${mainCommentsDiv.children.length})`;
+      }
+    }
+
+    function toggleRespuestas(btn) {
+      const comment = btn.closest('.comment');
+      const nestedCommentsDiv = comment.querySelector('.nested-comments');
+      if (nestedCommentsDiv.classList.contains('hidden')) {
+        nestedCommentsDiv.classList.remove('hidden');
+        btn.textContent = `Ocultar respuestas (${nestedCommentsDiv.children.length})`;
+      } else {
+        nestedCommentsDiv.classList.add('hidden');
+        btn.textContent = `Mostrar respuestas (${nestedCommentsDiv.children.length})`;
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <header id="site-title">Comunibet <button onclick="toggleModo()">🌗</button></header>
+  <nav id="main-menu" style="display: none;">
+    <button onclick="mostrarSeccion('foro')">Foro</button>
+    <button onclick="mostrarSeccion('perfil')">Mi Perfil</button>
+    <button onclick="mostrarSeccion('contacto')">Contacto</button>
+    <button onclick="mostrarSeccion('comunidad')">Comunidad</button>
+    <button onclick="cerrarSesion()">Cerrar sesión</button>
+    <div class="notification-icon" onclick="mostrarNotificaciones()">🔔<span id="noti-count">0</span></div>
+  </nav>
+
+  <div id="registro" class="section active">
+    <div class="form-section">
+      <h2>Regístrate</h2>
+      <input type="text" id="nuevoUsuario" placeholder="Nombre de usuario">
+      <input type="password" id="nuevaContrasena" placeholder="Contraseña">
+      <button onclick="registrarse()">Crear cuenta</button>
+      <a href="#" onclick="mostrarLogin()">¿Ya tienes cuenta? Inicia sesión</a>
+    </div>
+  </div>
+
+  <div id="login" class="section">
+    <div class="form-section">
+      <h2>Iniciar Sesión</h2>
+      <input type="text" id="usuario" placeholder="Nombre de usuario">
+      <input type="password" id="contrasena" placeholder="Contraseña">
+      <button onclick="iniciarSesion()">Entrar</button>
+    </div>
+  </div>
+
+  <div id="foro" class="section">
+    <div class="form-section">
+      <h2>Publicar Apuesta</h2>
+      <input type="text" id="partido" placeholder="Partido">
+      <input type="text" id="apuesta" placeholder="Tu apuesta">
+      <input type="time" id="hora">
+      <input type="date" id="fecha">
+      <textarea id="comentario" placeholder="Comentario adicional"></textarea>
+      <button onclick="publicar()">Publicar</button>
+    </div>
+    <input type="text" placeholder="Buscar por usuario o partido..." oninput="buscar(this.value)">
+    <div id="publicaciones"></div>
+  </div>
+
+  <div id="perfil" class="section">
+    <h2 id="nombrePerfil">Mi Perfil</h2>
+    <p>Descripción:</p>
+    <textarea id="descripcionPerfil" placeholder="Tu descripción..." onchange="guardarDescripcion()"></textarea>
+    <p>Seguidores: <span id="contadorSeguidores">0</span></p>
+    <button onclick="toggleSeguir()" id="btnSeguir">Seguir</button>
+  </div>
+
+  <div id="contacto" class="section">
+    <h2>Contacto</h2>
+    <p><img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" width="20"> Instagram: carlos.m1k</p>
+    <p><img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" width="20"> WhatsApp: 3203297982</p>
+  </div>
+
+  <div id="comunidad" class="section">
+    <h2>Comunidad</h2>
+    <div id="ranking"></div>
+  </div>
 </body>
+
 </html>
