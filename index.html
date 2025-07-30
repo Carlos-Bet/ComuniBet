@@ -196,7 +196,7 @@
 
     // ** TU CONFIGURACIÓN DE FIREBASE (YA INSERTADA) **
     const firebaseConfig = {
-      apiKey: "AIzaSyAs19oiYivfPYSCl_-xcOFeBQMziZSeBn0",
+      apiKey: "AIzaSyAs19oiYivPYSCl_-xcOFeBQMziZSeBn0",
       authDomain: "comunibetstudio.firebaseapp.com",
       projectId: "comunibetstudio",
       storageBucket: "comunibetstudio.firebasestorage.app",
@@ -238,11 +238,12 @@
     // Escucha cambios en el estado de autenticación de Firebase
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // Usuario logueado en Firebase Auth
+        console.log("onAuthStateChanged: Usuario autenticado. UID:", user.uid); // Añadido para depuración
         usuarioAuthId = user.uid;
         // Obtener el nombre de usuario de Firestore
         const userName = await getUserNameByUid(user.uid);
         if (userName) {
+          console.log("onAuthStateChanged: Nombre de usuario encontrado:", userName); // Añadido para depuración
           usuarioActual = userName; // Establece el nombre de usuario
           mostrarSeccion('foro'); // Muestra el foro automáticamente
           document.getElementById('main-menu').style.display = 'flex'; // Muestra el menú principal
@@ -251,12 +252,13 @@
           document.getElementById('nombrePerfil').textContent = userName; // Muestra el nombre de usuario en el perfil
           cargarPublicaciones(); // Carga las publicaciones desde la base de datos
         } else {
-          // Si el usuario autenticado no tiene un nombre de usuario en Firestore (posible si las reglas impidieron la creación)
+          console.warn("onAuthStateChanged: Usuario autenticado pero nombre de usuario NO ENCONTRADO en Firestore."); // Añadido para depuración
           alert("Error: Nombre de usuario no encontrado en la base de datos. Por favor, asegúrate de haberte registrado correctamente o contacta al soporte.");
           signOut(auth); // Forzar cierre de sesión
         }
 
       } else {
+        console.log("onAuthStateChanged: No hay usuario autenticado."); // Añadido para depuración
         // Usuario no logueado
         usuarioActual = null;
         usuarioAuthId = null;
@@ -421,6 +423,7 @@
 
       signInWithEmailAndPassword(auth, email, contrasena)
         .then((userCredential) => {
+          console.log("iniciarSesion: Inicio de sesión exitoso en Firebase Auth."); // Añadido para depuración
           // Sesión iniciada. onAuthStateChanged lo manejará para mostrar el foro.
           document.getElementById('usuario').value = ''; // Limpiar campo de email
           document.getElementById('contrasena').value = ''; // Limpiar campo de contraseña
@@ -429,7 +432,7 @@
         })
         .catch((error) => {
           const errorMessage = error.message;
-          console.error("Error de inicio de sesión:", error); // Para depuración
+          console.error("iniciarSesion: Error al intentar iniciar sesión:", error); // Para depuración
           // Mensajes más amigables para errores comunes
           if (error.code === 'auth/invalid-email') {
               alert("El formato del correo electrónico es inválido.");
@@ -489,7 +492,7 @@
       const fecha = document.getElementById('fecha').value;
       const comentario = document.getElementById('comentario').value;
 
-      if (!partido || !apuesta || !hora || !fecha || !comentario) {
+      if (!partido || !apuesta || !hora || !!fecha || !comentario) {
           alert("Por favor, completa todos los campos de la publicación.");
           return;
       }
