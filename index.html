@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Comunibet</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main>
+    <section id="foro">
+      <h1>Publicación principal</h1>
+      <p>Este es el contenido principal de la publicación en Comunibet.</p>
+      <button onclick="toggleComentarios()">Mostrar comentarios</button>
+      <div id="comentarios" style="display:none; margin-top:1em;">
+        <div class="comentario">
+          <strong>Usuario1:</strong> ¡Gran publicación!
+          <div class="respuestas">
+            <button onclick="toggleRespuestas(this)">Mostrar respuestas</button>
+            <div class="respuestas-contenido" style="display: none; margin-left: 1em;">
+              <p><strong>Usuario2:</strong> Totalmente de acuerdo</p>
+              <p><strong>Usuario3:</strong> Me gustó también</p>
+            </div>
+          </div>
+        </div>
+        <div class="comentario">
+          <strong>Usuario4:</strong> No estoy tan seguro...
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/script.js"></script>
+</body>
+</html>
