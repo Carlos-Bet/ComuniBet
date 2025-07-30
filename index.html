@@ -192,7 +192,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
-    // import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js"; // Descomentar si usas Analytics
 
     // ** TU CONFIGURACIÓN DE FIREBASE (YA INSERTADA) **
     const firebaseConfig = {
@@ -202,16 +201,15 @@
       storageBucket: "comunibetstudio.firebasestorage.app",
       messagingSenderId: "980411984792",
       appId: "1:980411984792:web:c7ab103a9efe8e121e99ed",
-      measurementId: "G-P6EJLZRTVV" // Puedes quitar esta línea si no usas Google Analytics
+      measurementId: "G-P6EJLZRTVV"
     };
 
     // Inicializa Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app); // Referencia a Firestore
     const auth = getAuth(app); // Referencia a Auth
-    // const analytics = getAnalytics(app); // Descomentar si usas Analytics
 
-    // ** Haz que 'db', 'auth' y las funciones de Firestore/Auth sean globales **
+    // ** Haz que las funciones de Firestore/Auth sean globales **
     window.db = db;
     window.auth = auth;
     window.collection = collection;
@@ -227,7 +225,11 @@
     window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
     window.signInWithEmailAndPassword = signInWithEmailAndPassword;
     window.signOut = signOut;
-    window.onAuthStateChanged = onAuthStateChanged;
+
+    // ** onAuthStateChanged se define aquí y es globalmente accesible **
+    // MUEVE ESTE BLOQUE COMPLETO AQUÍ AFUERA, FUERA DEL "window."
+    window.onAuthStateChangedFirebase = onAuthStateChanged; // Renombrado para evitar conflictos
+
   </script>
   <script>
     // ** Variables y lógica de autenticación (¡MODIFICADO PARA FIREBASE!) **
@@ -236,14 +238,15 @@
     let likes = new Map(); // Para rastrear likes/dislikes LOCALES del usuario
 
     // Escucha cambios en el estado de autenticación de Firebase
-    onAuthStateChanged(auth, async (user) => {
+    // USA la función globalmente accesible
+    onAuthStateChangedFirebase(auth, async (user) => { // CAMBIADO a onAuthStateChangedFirebase
       if (user) {
-        console.log("onAuthStateChanged: Usuario autenticado. UID:", user.uid); // Añadido para depuración
+        console.log("onAuthStateChanged: Usuario autenticado. UID:", user.uid);
         usuarioAuthId = user.uid;
         // Obtener el nombre de usuario de Firestore
         const userName = await getUserNameByUid(user.uid);
         if (userName) {
-          console.log("onAuthStateChanged: Nombre de usuario encontrado:", userName); // Añadido para depuración
+          console.log("onAuthStateChanged: Nombre de usuario encontrado:", userName);
           usuarioActual = userName; // Establece el nombre de usuario
           mostrarSeccion('foro'); // Muestra el foro automáticamente
           document.getElementById('main-menu').style.display = 'flex'; // Muestra el menú principal
@@ -252,13 +255,13 @@
           document.getElementById('nombrePerfil').textContent = userName; // Muestra el nombre de usuario en el perfil
           cargarPublicaciones(); // Carga las publicaciones desde la base de datos
         } else {
-          console.warn("onAuthStateChanged: Usuario autenticado pero nombre de usuario NO ENCONTRADO en Firestore."); // Añadido para depuración
+          console.warn("onAuthStateChanged: Usuario autenticado pero nombre de usuario NO ENCONTRADO en Firestore.");
           alert("Error: Nombre de usuario no encontrado en la base de datos. Por favor, asegúrate de haberte registrado correctamente o contacta al soporte.");
           signOut(auth); // Forzar cierre de sesión
         }
 
       } else {
-        console.log("onAuthStateChanged: No hay usuario autenticado."); // Añadido para depuración
+        console.log("onAuthStateChanged: No hay usuario autenticado.");
         // Usuario no logueado
         usuarioActual = null;
         usuarioAuthId = null;
@@ -400,7 +403,7 @@
 
         } catch (error) {
             const errorMessage = error.message;
-            console.error("Error de registro:", error); // Para depuración
+            console.error("Error de registro:", error);
             // Mensajes más amigables para errores comunes de Firebase Auth
             if (error.code === 'auth/email-already-in-use') {
                 alert("El correo electrónico ya está en uso. Por favor, usa otro o inicia sesión.");
@@ -423,7 +426,7 @@
 
       signInWithEmailAndPassword(auth, email, contrasena)
         .then((userCredential) => {
-          console.log("iniciarSesion: Inicio de sesión exitoso en Firebase Auth."); // Añadido para depuración
+          console.log("iniciarSesion: Inicio de sesión exitoso en Firebase Auth.");
           // Sesión iniciada. onAuthStateChanged lo manejará para mostrar el foro.
           document.getElementById('usuario').value = ''; // Limpiar campo de email
           document.getElementById('contrasena').value = ''; // Limpiar campo de contraseña
@@ -432,7 +435,7 @@
         })
         .catch((error) => {
           const errorMessage = error.message;
-          console.error("iniciarSesion: Error al intentar iniciar sesión:", error); // Para depuración
+          console.error("iniciarSesion: Error al intentar iniciar sesión:", error);
           // Mensajes más amigables para errores comunes
           if (error.code === 'auth/invalid-email') {
               alert("El formato del correo electrónico es inválido.");
@@ -492,7 +495,7 @@
       const fecha = document.getElementById('fecha').value;
       const comentario = document.getElementById('comentario').value;
 
-      if (!partido || !apuesta || !hora || !!fecha || !comentario) {
+      if (!partido || !apuesta || !hora || !fecha || !comentario) { // Corregido: !!fecha a !fecha
           alert("Por favor, completa todos los campos de la publicación.");
           return;
       }
