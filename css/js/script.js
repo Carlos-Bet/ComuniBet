@@ -1,1 +1,0 @@
-console.log("ComuniBet funcionando");
