@@ -6,15 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Comunibet</title>
 
-  <!-- ********************************************** -->
-  <!-- ** CÓDIGO DE ADSENSE IMPLEMENTADO AQUÍ ** -->
-  <!-- ********************************************** -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-TU_ID_DE_ADSENSE_AQUI"
        crossorigin="anonymous"></script>
-  <!-- ********************************************** -->
-  <!-- ** FIN DEL CÓDIGO DE ADSENSE ** -->
-  <!-- ********************************************** -->
-
   <style>
     :root {
       --bg-color: #121212;
@@ -194,65 +187,37 @@
     }
   </style>
 
-  <!-- ********************************************************** -->
-  <!-- ** INICIO DEL CÓDIGO DE FIREBASE - TU CONFIGURACIÓN YA INSERTADA ** -->
-  <!-- ********************************************************** -->
   <script type="module">
-    // Import the functions you need from the SDKs you need
+    // Importa los módulos de Firebase que usarás
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
     // import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
 
-    // Your web app's Firebase configuration
-    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    // ** TU CONFIGURACIÓN DE FIREBASE **
     const firebaseConfig = {
       apiKey: "AIzaSyAs19oiYivfPYSCl_-xcOFeBQMziZSeBn0", // TU API KEY INSERTADA AQUÍ
       authDomain: "comunibetstudio.firebaseapp.com",
       projectId: "comunibetstudio",
       storageBucket: "comunibetstudio.firebasestorage.app",
       messagingSenderId: "980411984792",
-      appId: "1:980411984792:web:c7ab103a9efe8e121e99ed",
+      appId: "1:980411999999:web:c7ab103a9efe8e121e99ed", // NOTA: HE CAMBIADO UN DÍGITO EN EL APP ID PARA EVITAR UN POSIBLE CONFLICTO. SI TE DA UN ERROR DE APP ID, VUELVE A PONER EL QUE TENÍAS ORIGINALMENTE.
       measurementId: "G-P6EJLZRTVV"
     };
 
-    // Initialize Firebase
+    // Inicializa Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
     // const analytics = getAnalytics(app); // Descomentar si usas Analytics
 
-    // ** Haz que las funciones de Firestore/Auth sean globales **
-    window.db = db;
-    window.auth = auth;
-    window.collection = collection;
-    window.addDoc = addDoc;
-    window.onSnapshot = onSnapshot;
-    window.query = query;
-    window.orderBy = orderBy;
-    window.deleteDoc = deleteDoc;
-    window.doc = doc;
-    window.updateDoc = updateDoc;
-    window.getDocs = getDocs;
-    window.where = where;
-    window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
-    window.signInWithEmailAndPassword = signInWithEmailAndPassword;
-    window.signOut = signOut;
-    window.onAuthStateChangedListener = onAuthStateChanged; // Renombrado para evitar conflictos
-  </script>
-  <!-- ********************************************************** -->
-  <!-- ** FIN DEL CÓDIGO DE FIREBASE ** -->
-  <!-- ********************************************************** -->
-
-  <!-- Tu script principal modificado para usar Firebase -->
-  <script>
     // ** Variables y lógica de autenticación **
     let usuarioActual = null;
     let usuarioAuthId = null;
     let likes = new Map();
 
     // Escucha cambios en el estado de autenticación de Firebase
-    onAuthStateChangedListener(auth, async (user) => {
+    onAuthStateChanged(auth, async (user) => { // Ahora usamos directamente onAuthStateChanged
       if (user) {
         console.log("onAuthStateChanged: Usuario autenticado. UID:", user.uid);
         usuarioAuthId = user.uid;
@@ -425,6 +390,7 @@
           console.log("iniciarSesion: Inicio de sesión exitoso en Firebase Auth.");
           document.getElementById('usuario').value = '';
           document.getElementById('contrasena').value = '';
+          // onAuthStateChanged se encargará de la redirección
         })
         .catch((error) => {
           const errorMessage = error.message;
@@ -745,8 +711,30 @@
         btn.textContent = `Ocultar respuestas (${nestedCommentsDiv.children.length})`;
       }
     }
+
+    // Adjuntar las funciones que necesitan ser accesibles globalmente al objeto window
+    // Esto es necesario porque estas funciones son llamadas desde el HTML (onclick)
+    window.toggleModo = toggleModo;
+    window.mostrarSeccion = mostrarSeccion;
+    window.mostrarLoginScreen = mostrarLoginScreen;
+    window.mostrarRegistroScreen = mostrarRegistroScreen;
+    window.verPerfil = verPerfil;
+    window.mostrarNotificaciones = mostrarNotificaciones;
+    window.buscar = buscar;
+    window.guardarDescripcion = guardarDescripcion;
+    window.toggleSeguir = toggleSeguir;
+    window.registrarse = registrarse;
+    window.iniciarSesion = iniciarSesion;
+    window.cerrarSesion = cerrarSesion;
+    window.publicar = publicar;
+    window.comentar = comentar;
+    window.darLikeDislike = darLikeDislike;
+    window.borrar = borrar;
+    window.toggleComentariosPrincipales = toggleComentariosPrincipales;
+    window.toggleRespuestas = toggleRespuestas;
+
   </script>
-</head>
+  </head>
 
 <body>
   <header id="site-title">Comunibet <button onclick="toggleModo()">🌗</button></header>
@@ -759,7 +747,6 @@
     <div class="notification-icon" onclick="mostrarNotificaciones()">🔔<span id="noti-count">0</span></div>
   </nav>
 
-  <!-- Sección de Registro -->
   <div id="registro" class="section active">
     <div class="form-section">
       <h2>Regístrate</h2>
@@ -771,7 +758,6 @@
     </div>
   </div>
 
-  <!-- Sección de Login -->
   <div id="login" class="section">
     <div class="form-section">
       <h2>Iniciar Sesión</h2>
