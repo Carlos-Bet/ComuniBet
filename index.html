@@ -9,40 +9,235 @@
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-TU_ID_DE_ADSENSE_AQUI"
        crossorigin="anonymous"></script>
   <style>
-    /* ... (tu CSS permanece igual) ... */
+    :root {
+      --bg-color: #121212;
+      --text-color: #fff;
+      --header-color: #1e1e1e;
+      --nav-color: #333;
+      --button-bg: #444;
+      --accent-color: #1e90ff;
+    }
+
+    body.light {
+      --bg-color: #f5f5f5;
+      --text-color: #000;
+      --header-color: #e0e0e0;
+      --nav-color: #ccc;
+      --button-bg: #ddd;
+      --accent-color: #0077cc;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    header {
+      background-color: var(--header-color);
+      padding: 1rem;
+      text-align: center;
+      font-size: 2rem;
+      font-weight: bold;
+    }
+
+    nav {
+      background-color: var(--nav-color);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    nav button {
+      background-color: var(--button-bg);
+      color: var(--text-color);
+      border: none;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .section {
+      display: none;
+      padding: 1rem;
+    }
+
+    .active {
+      display: block;
+    }
+
+    .form-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-width: 300px;
+      margin: auto;
+    }
+
+    .form-section input,
+    .form-section textarea {
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+
+    .form-section button {
+      padding: 0.5rem;
+      font-size: 1rem;
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+    }
+
+    .post {
+      background-color: #222;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+
+    .comment-section {
+      margin-top: 1rem;
+    }
+
+    /* Estilo para los comentarios principales */
+    .comment {
+      background-color: #2b2b2b;
+      padding: 0.8rem;
+      margin-bottom: 0.5rem;
+      border-radius: 4px;
+    }
+
+    /* Estilo para las respuestas anidadas */
+    .nested-comments {
+      margin-left: 2rem;
+      border-left: 2px solid #555;
+      padding-left: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    /* Ocultar elementos por defecto */
+    .hidden {
+      display: none;
+    }
+
+    .toggle-replies-button,
+    .toggle-comments-button {
+      background: none;
+      border: none;
+      color: var(--accent-color);
+      cursor: pointer;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+      padding: 0;
+      text-align: left;
+      width: 100%;
+    }
+
+    .like-dislike button {
+      background: none;
+      border: none;
+      color: var(--accent-color);
+      cursor: pointer;
+      margin-right: 0.5rem;
+    }
+
+    .notification {
+      background-color: var(--button-bg);
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .edit-delete {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+    }
+
+    .edit-delete button {
+      margin-left: 5px;
+      font-size: 0.8rem;
+    }
+
+    .notification-icon {
+      position: relative;
+      margin-left: auto;
+      cursor: pointer;
+    }
+
+    .notification-icon span {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: red;
+      color: white;
+      border-radius: 50%;
+      padding: 2px 5px;
+      font-size: 0.7rem;
+    }
+
+    @media (max-width: 600px) {
+      nav {
+        flex-direction: column;
+      }
+    }
   </style>
 
-  <script type="module">
-    // Importa los módulos de Firebase que usarás
+  <script type="module" defer>
+    // Import the functions you need from the SDKs you need
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
     // import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
 
-    // ** TU CONFIGURACIÓN DE FIREBASE **
+    // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
     const firebaseConfig = {
-      apiKey: "AIzaSyAs19oiYivfPYSCl_-xcOFeBQMziZSeBn0", // TU API KEY INSERTADA AQUÍ
+      apiKey: "AIzaSyAs19oiYivfPYSCl_-xcOFeBQMziZSeBn0",
       authDomain: "comunibetstudio.firebaseapp.com",
       projectId: "comunibetstudio",
       storageBucket: "comunibetstudio.firebasestorage.app",
       messagingSenderId: "980411984792",
-      appId: "1:980411999999:web:c7ab103a9efe8e121e99ed",
+      appId: "1:980411984792:web:c7ab103a9efe8e121e99ed", // TU APP ID ORIGINAL
       measurementId: "G-P6EJLZRTVV"
     };
 
-    // Inicializa Firebase
+    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
     // const analytics = getAnalytics(app); // Descomentar si usas Analytics
 
-    // ** Variables y lógica de autenticación **
+    // ** Haz que las funciones de Firestore/Auth sean globales **
+    // Renombrado onAuthStateChanged a onAuthStateChangedListener para evitar conflictos y mantener el nombre usado en tu segundo script
+    window.db = db;
+    window.auth = auth;
+    window.collection = collection;
+    window.addDoc = addDoc;
+    window.onSnapshot = onSnapshot;
+    window.query = query;
+    window.orderBy = orderBy;
+    window.deleteDoc = deleteDoc;
+    window.doc = doc;
+    window.updateDoc = updateDoc;
+    window.getDocs = getDocs;
+    window.where = where;
+    window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+    window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+    window.signOut = signOut;
+    window.onAuthStateChangedListener = onAuthStateChanged; // <--- SE HACE GLOBAL CON ESTE NOMBRE
+  </script>
+  <script defer> // ** Variables y lógica de autenticación **
     let usuarioActual = null;
     let usuarioAuthId = null;
     let likes = new Map();
 
     // Escucha cambios en el estado de autenticación de Firebase
-    onAuthStateChanged(auth, async (user) => {
+    onAuthStateChangedListener(auth, async (user) => { // Usamos la variable global renombrada
       if (user) {
         console.log("onAuthStateChanged: Usuario autenticado. UID:", user.uid);
         usuarioAuthId = user.uid;
@@ -215,8 +410,8 @@
           console.log("iniciarSesion: Inicio de sesión exitoso en Firebase Auth.");
           document.getElementById('usuario').value = '';
           document.getElementById('contrasena').value = '';
-          // ¡Aquí es donde añadimos la recarga!
-          location.reload(); // Esto recarga la página completamente
+          // Aquí añadimos la recarga completa de la página
+          location.reload(); 
         })
         .catch((error) => {
           const errorMessage = error.message;
@@ -538,30 +733,8 @@
         btn.textContent = `Ocultar respuestas (${nestedCommentsDiv.children.length})`;
       }
     }
-
-    // Adjuntar las funciones que necesitan ser accesibles globalmente al objeto window
-    // Esto es necesario porque estas funciones son llamadas desde el HTML (onclick)
-    window.toggleModo = toggleModo;
-    window.mostrarSeccion = mostrarSeccion;
-    window.mostrarLoginScreen = mostrarLoginScreen;
-    window.mostrarRegistroScreen = mostrarRegistroScreen;
-    window.verPerfil = verPerfil;
-    window.mostrarNotificaciones = mostrarNotificaciones;
-    window.buscar = buscar;
-    window.guardarDescripcion = guardarDescripcion;
-    window.toggleSeguir = toggleSeguir;
-    window.registrarse = registrarse;
-    window.iniciarSesion = iniciarSesion;
-    window.cerrarSesion = cerrarSesion;
-    window.publicar = publicar;
-    window.comentar = comentar;
-    window.darLikeDislike = darLikeDislike;
-    window.borrar = borrar;
-    window.toggleComentariosPrincipales = toggleComentariosPrincipales;
-    window.toggleRespuestas = toggleRespuestas;
-
   </script>
-  </head>
+</head>
 
 <body>
   <header id="site-title">Comunibet <button onclick="toggleModo()">🌗</button></header>
