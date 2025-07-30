@@ -190,18 +190,19 @@
   <script type="module" defer>
     // Import the functions you need from the SDKs you need
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+    // Importar arrayUnion y arrayRemove para la gestión de seguidores
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc, getDocs, where, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
     // import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
 
     // Your web app's Firebase configuration
     const firebaseConfig = {
-      apiKey: "AIzaSyAs19oiYivfPYSCl_-xcOFeBQMziZSeBn0",
+      apiKey: "TU_API_KEY_AQUI", // Asegúrate de que este sea tu API Key correcto
       authDomain: "comunibetstudio.firebaseapp.com",
       projectId: "comunibetstudio",
       storageBucket: "comunibetstudio.firebasestorage.app",
       messagingSenderId: "980411984792",
-      appId: "1:980411984792:web:c7ab103a9efe8e121e99ed", // Asegúrate de que este sea tu App ID correcto
+      appId: "1:980411984792:web:c7ab103a9efe8e121e99ed",
       measurementId: "G-P6EJLZRTVV"
     };
 
@@ -211,9 +212,10 @@
     const auth = getAuth(app);
     // const analytics = getAnalytics(app); // Descomentar si usas Analytics
 
-    // ** Variables globales para el estado del usuario **
-    window.usuarioActual = null;
-    window.usuarioAuthId = null;
+    // ** Variables globales para el estado del usuario y el perfil visitado **
+    window.usuarioActual = null; // Nombre de usuario del que está logueado
+    window.usuarioAuthId = null; // UID del que está logueado
+    window.perfilVisitadoUid = null; // UID del perfil que se está viendo actualmente
     window.likes = new Map();
 
     // ** Hacemos las funciones de Firebase globales para el otro script **
@@ -229,11 +231,16 @@
     window.updateDoc = updateDoc;
     window.getDocs = getDocs;
     window.where = where;
+    window.arrayUnion = arrayUnion; // Exponemos arrayUnion
+    window.arrayRemove = arrayRemove; // Exponemos arrayRemove
     window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
     window.signInWithEmailAndPassword = signInWithEmailAndPassword;
     window.signOut = signOut;
-    window.onAuthStateChangedListener = onAuthStateChanged; // Exponemos onAuthStateChanged con este nombre
-    window.getUserNameByUid = async function(uid) { // También hacemos esta función global
+    window.onAuthStateChangedListener = onAuthStateChanged;
+
+    // Función auxiliar para obtener el nombre de usuario por UID
+    window.getUserNameByUid = async function(uid) {
+        if (!uid) return null;
         const q = query(collection(db, "usuarios"), where("uid", "==", uid));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
@@ -241,14 +248,45 @@
         }
         return null;
     };
-    window.checkIfUserNameExists = async function(username) { // Y esta también
+
+    // Función auxiliar para obtener el UID por nombre de usuario
+    window.getUidByUserName = async function(userName) {
+        if (!userName) return null;
+        const q = query(collection(db, "usuarios"), where("userName", "==", userName));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+            return querySnapshot.docs[0].data().uid;
+        }
+        return null;
+    };
+
+    // Función auxiliar para verificar si un nombre de usuario existe
+    window.checkIfUserNameExists = async function(username) {
         const q = query(collection(db, "usuarios"), where("userName", "==", username));
         const querySnapshot = await getDocs(q);
         return !querySnapshot.empty;
     };
+
+    // Nueva función para cargar los datos del perfil de un UID específico
+    window.cargarDatosPerfilDeFirestore = async function(uid) {
+        if (!uid) return { userName: '', descripcion: '', seguidores: [], siguiendo: [] };
+        const q = query(collection(db, "usuarios"), where("uid", "==", uid));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+            const userData = querySnapshot.docs[0].data();
+            return {
+                userName: userData.userName,
+                descripcion: userData.descripcion || '',
+                seguidores: userData.seguidores || [],
+                siguiendo: userData.siguiendo || []
+            };
+        }
+        return { userName: '', descripcion: '', seguidores: [], siguiendo: [] };
+    };
+
   </script>
   <script defer>
-    // ** Funciones de UI y Lógica NO relacionadas directamente con Firebase (pero que usan las variables globales) **
+    // ** Funciones de UI y Lógica (usan las variables globales) **
     function toggleModo() {
       document.body.classList.toggle('light');
     }
@@ -277,8 +315,44 @@
       document.getElementById('registro').style.display = 'block';
     }
 
-    function verPerfil(nombre) {
-      document.getElementById('nombrePerfil').textContent = nombre;
+    // Modificamos verPerfil para cargar el perfil correcto
+    async function verPerfil(nombre) {
+      // Buscar el UID del nombre de usuario que se quiere ver
+      const uidDelPerfil = await window.getUidByUserName(nombre);
+
+      if (!uidDelPerfil) {
+        alert(`No se encontró el perfil de ${nombre}.`);
+        return;
+      }
+
+      window.perfilVisitadoUid = uidDelPerfil; // Establecer el UID del perfil que se está viendo
+
+      const datosPerfil = await window.cargarDatosPerfilDeFirestore(uidDelPerfil);
+
+      document.getElementById('nombrePerfil').textContent = datosPerfil.userName;
+      document.getElementById('descripcionPerfil').value = datosPerfil.descripcion;
+      document.getElementById('contadorSeguidores').textContent = datosPerfil.seguidores.length;
+
+      const btnSeguir = document.getElementById('btnSeguir');
+      const descripcionInput = document.getElementById('descripcionPerfil');
+
+      if (uidDelPerfil === window.usuarioAuthId) {
+        // Es nuestro propio perfil
+        btnSeguir.style.display = 'none'; // No se puede seguir a uno mismo
+        descripcionInput.readOnly = false; // Podemos editar nuestra descripción
+      } else {
+        // Es el perfil de otra persona
+        btnSeguir.style.display = 'inline-block'; // Mostrar botón de seguir
+        descripcionInput.readOnly = true; // No podemos editar su descripción
+
+        // Verificar si ya seguimos a esta persona
+        if (window.usuarioAuthId && datosPerfil.seguidores.includes(window.usuarioAuthId)) {
+          btnSeguir.textContent = "Siguiendo";
+        } else {
+          btnSeguir.textContent = "Seguir";
+        }
+      }
+
       mostrarSeccion('perfil');
     }
 
@@ -290,26 +364,88 @@
       alert("Buscando: " + valor);
     }
 
-    function guardarDescripcion() {
-      alert("Descripción guardada");
-    }
+    async function guardarDescripcion() {
+      if (!window.usuarioAuthId || window.perfilVisitadoUid !== window.usuarioAuthId) {
+        alert("Solo puedes editar tu propia descripción.");
+        return;
+      }
 
-    function toggleSeguir() {
-      const btn = document.getElementById("btnSeguir");
-      const count = document.getElementById("contadorSeguidores");
-      if (btn.textContent === "Seguir") {
-        btn.textContent = "Siguiendo";
-        count.textContent = parseInt(count.textContent) + 1;
-      } else {
-        btn.textContent = "Seguir";
-        count.textContent = parseInt(count.textContent) - 1;
+      const nuevaDescripcion = document.getElementById('descripcionPerfil').value;
+      try {
+        const q = window.query(window.collection(window.db, "usuarios"), window.where("uid", "==", window.usuarioAuthId));
+        const querySnapshot = await window.getDocs(q);
+        if (!querySnapshot.empty) {
+            const userDocRef = querySnapshot.docs[0].ref;
+            await window.updateDoc(userDocRef, {
+                descripcion: nuevaDescripcion
+            });
+            alert("Descripción guardada.");
+        } else {
+            alert("Error: No se encontró tu perfil para guardar la descripción.");
+        }
+      } catch (e) {
+        console.error("Error al guardar descripción:", e);
+        alert("Hubo un error al guardar la descripción.");
       }
     }
+
+    async function toggleSeguir() {
+      if (!window.usuarioAuthId) {
+        alert("Debes iniciar sesión para seguir a otros usuarios.");
+        return;
+      }
+      if (window.perfilVisitadoUid === window.usuarioAuthId) {
+        alert("No puedes seguirte a ti mismo.");
+        return;
+      }
+      if (!window.perfilVisitadoUid) {
+        alert("No hay un perfil válido seleccionado para seguir.");
+        return;
+      }
+
+      const btn = document.getElementById("btnSeguir");
+      const contadorSeguidores = document.getElementById("contadorSeguidores");
+
+      try {
+        const miUsuarioQuery = window.query(window.collection(window.db, "usuarios"), window.where("uid", "==", window.usuarioAuthId));
+        const miUsuarioSnapshot = await window.getDocs(miUsuarioQuery);
+        const miUsuarioDocRef = miUsuarioSnapshot.docs[0].ref;
+
+        const otroUsuarioQuery = window.query(window.collection(window.db, "usuarios"), window.where("uid", "==", window.perfilVisitadoUid));
+        const otroUsuarioSnapshot = await window.getDocs(otroUsuarioQuery);
+        const otroUsuarioDocRef = otroUsuarioSnapshot.docs[0].ref;
+
+        if (btn.textContent === "Seguir") {
+          // Si estaba en "Seguir", ahora lo va a seguir
+          await window.updateDoc(miUsuarioDocRef, {
+            siguiendo: window.arrayUnion(window.perfilVisitadoUid)
+          });
+          await window.updateDoc(otroUsuarioDocRef, {
+            seguidores: window.arrayUnion(window.usuarioAuthId)
+          });
+          btn.textContent = "Siguiendo";
+          contadorSeguidores.textContent = parseInt(contadorSeguidores.textContent) + 1;
+        } else {
+          // Si estaba en "Siguiendo", ahora lo va a dejar de seguir
+          await window.updateDoc(miUsuarioDocRef, {
+            siguiendo: window.arrayRemove(window.perfilVisitadoUid)
+          });
+          await window.updateDoc(otroUsuarioDocRef, {
+            seguidores: window.arrayRemove(window.usuarioAuthId)
+          });
+          btn.textContent = "Seguir";
+          contadorSeguidores.textContent = parseInt(contadorSeguidores.textContent) - 1;
+        }
+      } catch (e) {
+        console.error("Error al seguir/dejar de seguir:", e);
+        alert("Hubo un error al actualizar la relación de seguimiento.");
+      }
+    }
+
 
     // ** LÓGICA DE AUTENTICACIÓN Y ESTADO DE USUARIO **
 
     // Escucha cambios en el estado de autenticación de Firebase
-    // ESTA ES LA FUNCIÓN CLAVE QUE SE EJECUTA AL CARGAR LA PÁGINA O AL INICIAR/CERRAR SESIÓN
     onAuthStateChangedListener(auth, async (user) => {
       if (user) {
         console.log("onAuthStateChanged: Usuario autenticado. UID:", user.uid);
@@ -318,28 +454,39 @@
         if (userName) {
           console.log("onAuthStateChanged: Nombre de usuario encontrado:", userName);
           window.usuarioActual = userName; // Actualiza la variable global
-          mostrarSeccion('foro'); // Muestra el foro
+          
+          // Establecer el perfil visitado como el propio al iniciar sesión o cargar la página
+          window.perfilVisitadoUid = user.uid; 
+          
+          mostrarSeccion('foro'); // Muestra el foro por defecto al iniciar sesión
           document.getElementById('main-menu').style.display = 'flex';
           document.getElementById('registro').style.display = 'none';
           document.getElementById('login').style.display = 'none';
           document.getElementById('nombrePerfil').textContent = userName;
-          cargarPublicaciones(); // Carga las publicaciones cuando el usuario está listo
+          cargarPublicaciones(); // Carga las publicaciones
+          
+          // Cargar los datos del perfil del usuario logueado para "Mi Perfil"
+          const myProfileData = await window.cargarDatosPerfilDeFirestore(user.uid);
+          document.getElementById('descripcionPerfil').value = myProfileData.descripcion;
+          document.getElementById('contadorSeguidores').textContent = myProfileData.seguidores.length;
+          document.getElementById('btnSeguir').style.display = 'none'; // No mostrar seguir en tu propio perfil
+          document.getElementById('descripcionPerfil').readOnly = false; // Tu descripción es editable
         } else {
           console.warn("onAuthStateChanged: Usuario autenticado pero nombre de usuario NO ENCONTRADO en Firestore.");
           alert("Error: Nombre de usuario no encontrado en la base de datos. Por favor, asegúrate de haberte registrado correctamente o contacta al soporte.");
-          signOut(auth); // Desconectar si no se encuentra el nombre de usuario
+          window.signOut(auth); // Desconectar si no se encuentra el nombre de usuario
         }
       } else {
         console.log("onAuthStateChanged: No hay usuario autenticado.");
         window.usuarioActual = null;
         window.usuarioAuthId = null;
+        window.perfilVisitadoUid = null; // Reiniciar perfil visitado
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
         document.getElementById('login').classList.add('active'); // Por defecto, muestra el login
         document.getElementById('main-menu').style.display = 'none';
         document.getElementById('registro').style.display = 'block'; // Asegura que el registro sea visible si está activo
         document.getElementById('login').style.display = 'block'; // Asegura que el login sea visible si está activo
 
-        // Lógica para alternar entre registro y login si ambos están "activos" en el DOM
         if (document.getElementById('registro').classList.contains('active')) {
             document.getElementById('login').style.display = 'none';
         } else {
@@ -368,18 +515,22 @@
             const userCredential = await window.createUserWithEmailAndPassword(auth, email, contrasena);
             const user = userCredential.user;
 
+            // Al crear el usuario, inicializamos la descripción, seguidores y siguiendo
             await window.addDoc(window.collection(db, "usuarios"), {
                 uid: user.uid,
                 userName: username,
                 email: email,
-                createdAt: Date.now()
+                createdAt: Date.now(),
+                descripcion: '', // Nueva descripción vacía
+                seguidores: [], // Nuevo array vacío para seguidores
+                siguiendo: [] // Nuevo array vacío para siguiendo
             });
 
             alert("Cuenta creada. Por favor, inicia sesión.");
             document.getElementById('nuevoEmail').value = '';
             document.getElementById('nuevaContrasena').value = '';
             document.getElementById('nuevoNombreUsuario').value = '';
-            mostrarLoginScreen(); // Muestra la pantalla de login después del registro
+            mostrarLoginScreen();
         } catch (error) {
             const errorMessage = error.message;
             console.error("Error de registro:", error);
@@ -407,26 +558,13 @@
         const user = userCredential.user;
         console.log("iniciarSesion: Inicio de sesión exitoso en Firebase Auth.");
 
-        // Limpiar campos
         document.getElementById('usuario').value = '';
         document.getElementById('contrasena').value = '';
 
-        // Obtener nombre de usuario y actualizar variables globales
-        const userName = await window.getUserNameByUid(user.uid);
-        if (userName) {
-            window.usuarioActual = userName;
-            window.usuarioAuthId = user.uid;
-            document.getElementById('nombrePerfil').textContent = userName;
-            mostrarSeccion('foro'); // ¡Directamente al foro!
-            document.getElementById('main-menu').style.display = 'flex'; // Asegurarse que el menú principal se muestre
-            document.getElementById('registro').style.display = 'none';
-            document.getElementById('login').style.display = 'none';
-            cargarPublicaciones(); // Cargar publicaciones
-        } else {
-            console.warn("iniciarSesion: Usuario autenticado pero nombre de usuario NO ENCONTRADO en Firestore.");
-            alert("Error: Nombre de usuario no encontrado en la base de datos. Por favor, inicia sesión de nuevo o contacta al soporte.");
-            window.signOut(auth); // Desconectar si no se encuentra el nombre
-        }
+        // Ahora, una vez que el usuario ha iniciado sesión, el onAuthStateChangedListener se encargará de
+        // cargar los datos del perfil y mostrar la sección del foro.
+        // No necesitamos recargar la página ni manipular la UI aquí directamente.
+        // El onAuthStateChangedListener ya tiene la lógica para esto.
 
       } catch (error) {
           const errorMessage = error.message;
@@ -448,20 +586,7 @@
     function cerrarSesion() {
       window.signOut(auth).then(() => {
         alert("Sesión cerrada.");
-        // Restablecer la interfaz a la pantalla de login/registro
-        window.usuarioActual = null;
-        window.usuarioAuthId = null;
-        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-        document.getElementById('login').classList.add('active');
-        document.getElementById('main-menu').style.display = 'none';
-        document.getElementById('registro').style.display = 'block';
-        document.getElementById('login').style.display = 'block';
-
-        if (document.getElementById('registro').classList.contains('active')) {
-            document.getElementById('login').style.display = 'none';
-        } else {
-            document.getElementById('registro').style.display = 'none';
-        }
+        // onAuthStateChangedListener se encargará de resetear la UI a login/registro
       }).catch((error) => {
         console.error("Error al cerrar sesión:", error);
       });
@@ -768,12 +893,12 @@
     window.mostrarSeccion = mostrarSeccion;
     window.mostrarLoginScreen = mostrarLoginScreen;
     window.mostrarRegistroScreen = mostrarRegistroScreen;
-    window.verPerfil = verPerfil;
+    window.verPerfil = verPerfil; // Actualizada
     window.mostrarNotificaciones = mostrarNotificaciones;
     window.buscar = buscar;
-    window.guardarDescripcion = guardarDescripcion;
-    window.toggleSeguir = toggleSeguir;
-    window.registrarse = registrarse;
+    window.guardarDescripcion = guardarDescripcion; // Actualizada
+    window.toggleSeguir = toggleSeguir; // Actualizada
+    window.registrarse = registrarse; // Actualizada para inicializar campos
     window.iniciarSesion = iniciarSesion;
     window.cerrarSesion = cerrarSesion;
     window.publicar = publicar;
@@ -790,8 +915,7 @@
   <header id="site-title">Comunibet <button onclick="toggleModo()">🌗</button></header>
   <nav id="main-menu" style="display: none;">
     <button onclick="mostrarSeccion('foro')">Foro</button>
-    <button onclick="mostrarSeccion('perfil')">Mi Perfil</button>
-    <button onclick="mostrarSeccion('contacto')">Contacto</button>
+    <button onclick="verPerfil(window.usuarioActual)">Mi Perfil</button> <button onclick="mostrarSeccion('contacto')">Contacto</button>
     <button onclick="mostrarSeccion('comunidad')">Comunidad</button>
     <button onclick="cerrarSesion()">Cerrar sesión</button>
     <div class="notification-icon" onclick="mostrarNotificaciones()">🔔<span id="noti-count">0</span></div>
@@ -835,7 +959,8 @@
   <div id="perfil" class="section">
     <h2 id="nombrePerfil">Mi Perfil</h2>
     <p>Descripción:</p>
-    <textarea id="descripcionPerfil" placeholder="Tu descripción..." onchange="guardarDescripcion()"></textarea>
+    <textarea id="descripcionPerfil" placeholder="Tu descripción..."></textarea>
+    <button onclick="guardarDescripcion()">Guardar Descripción</button>
     <p>Seguidores: <span id="contadorSeguidores">0</span></p>
     <button onclick="toggleSeguir()" id="btnSeguir">Seguir</button>
   </div>
