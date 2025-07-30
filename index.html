@@ -5,6 +5,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Comunibet</title>
+
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-TU_ID_DE_ADSENSE_AQUI"
+       crossorigin="anonymous"></script>
   <style>
     :root {
       --bg-color: #121212;
@@ -187,7 +190,7 @@
   <script type="module">
     // Importa los módulos de Firebase que usarás
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
     // import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js"; // Descomentar si usas Analytics
 
@@ -219,6 +222,8 @@
     window.deleteDoc = deleteDoc;
     window.doc = doc;
     window.updateDoc = updateDoc;
+    window.getDocs = getDocs; // Añadido para verificar unicidad de nombre de usuario
+    window.where = where;     // Añadido para verificar unicidad de nombre de usuario
     window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
     window.signInWithEmailAndPassword = signInWithEmailAndPassword;
     window.signOut = signOut;
@@ -226,23 +231,35 @@
   </script>
   <script>
     // ** Variables y lógica de autenticación (¡MODIFICADO PARA FIREBASE!) **
-    let usuarioActual = null; // Gestionado por Firebase Auth
+    let usuarioActual = null; // Ahora almacenará el NOMBRE DE USUARIO, no el email
+    let usuarioAuthId = null; // Almacenará el UID de Firebase Auth
     let likes = new Map(); // Para rastrear likes/dislikes LOCALES del usuario
 
     // Escucha cambios en el estado de autenticación de Firebase
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => { // async para usar await en getUserNameByUid
       if (user) {
-        // Usuario logueado
-        usuarioActual = user.email; // O user.uid si prefieres el ID único de Firebase
-        mostrarSeccion('foro'); // Muestra el foro automáticamente
-        document.getElementById('main-menu').style.display = 'flex'; // Muestra el menú principal
-        document.getElementById('registro').style.display = 'none'; // Oculta el registro
-        document.getElementById('login').style.display = 'none'; // Oculta el login
-        document.getElementById('nombrePerfil').textContent = user.email;
-        cargarPublicaciones(); // Carga las publicaciones desde la base de datos
+        // Usuario logueado en Firebase Auth
+        usuarioAuthId = user.uid;
+        // Obtener el nombre de usuario de Firestore
+        const userName = await getUserNameByUid(user.uid);
+        if (userName) {
+          usuarioActual = userName; // Establece el nombre de usuario
+          mostrarSeccion('foro'); // Muestra el foro automáticamente
+          document.getElementById('main-menu').style.display = 'flex'; // Muestra el menú principal
+          document.getElementById('registro').style.display = 'none'; // Oculta el registro
+          document.getElementById('login').style.display = 'none'; // Oculta el login
+          document.getElementById('nombrePerfil').textContent = userName; // Muestra el nombre de usuario en el perfil
+          cargarPublicaciones(); // Carga las publicaciones desde la base de datos
+        } else {
+          // Si el usuario autenticado no tiene un nombre de usuario en Firestore (posible si borraste la colección usuarios)
+          alert("Error: Nombre de usuario no encontrado. Por favor, contacta al soporte.");
+          signOut(auth); // Forzar cierre de sesión
+        }
+
       } else {
         // Usuario no logueado
         usuarioActual = null;
+        usuarioAuthId = null;
         // Reinicia las secciones, muestra solo login/registro
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
         document.getElementById('login').classList.add('active'); // Por defecto, muestra login
@@ -260,6 +277,25 @@
         }
       }
     });
+
+    // ** Funciones auxiliares para nombres de usuario **
+    async function checkIfUserNameExists(username) {
+        const q = query(collection(db, "usuarios"), where("userName", "==", username));
+        const querySnapshot = await getDocs(q);
+        return !querySnapshot.empty; // Retorna true si ya existe
+    }
+
+    async function getUserNameByUid(uid) {
+        // Ahora buscamos el documento donde el campo 'uid' coincide con el UID del usuario autenticado
+        const q = query(collection(db, "usuarios"), where("uid", "==", uid));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+            // Debería haber solo un documento por UID, tomamos el primero
+            return querySnapshot.docs[0].data().userName;
+        }
+        return null;
+    }
+
 
     // ** Funciones de UI y Lógica NO relacionadas directamente con Firebase (mantienen su función original) **
     function toggleModo() {
@@ -322,21 +358,51 @@
       // Necesitarías Firebase para persistir los seguidores
     }
 
-    // ** FUNCIONES DE AUTENTICACIÓN (¡MODIFICADO PARA FIREBASE!) **
-    function registrarse() {
-      const email = document.getElementById('nuevoUsuario').value; // Usamos email para Firebase Auth
-      const contrasena = document.getElementById('nuevaContrasena').value;
+    // ** FUNCIONES DE AUTENTICACIÓN (¡MODIFICADO PARA FIREBASE Y NOMBRE DE USUARIO!) **
+    async function registrarse() {
+        const email = document.getElementById('nuevoEmail').value; // CAMBIADO ID DE INPUT
+        const contrasena = document.getElementById('nuevaContrasena').value;
+        const username = document.getElementById('nuevoNombreUsuario').value; // NUEVO INPUT
 
-      createUserWithEmailAndPassword(auth, email, contrasena)
-        .then((userCredential) => {
-          // Usuario registrado y logueado. onAuthStateChanged lo manejará.
-          alert("Cuenta creada y sesión iniciada.");
-        })
-        .catch((error) => {
-          const errorMessage = error.message;
-          alert(`Error al registrar: ${errorMessage}`);
-          console.error("Error de registro:", error);
-        });
+        if (!email || !contrasena || !username) {
+            alert("Por favor, completa todos los campos (email, contraseña, nombre de usuario).");
+            return;
+        }
+
+        // 1. Verificar unicidad del nombre de usuario en Firestore
+        const usernameExists = await checkIfUserNameExists(username);
+        if (usernameExists) {
+            alert("El nombre de usuario '" + username + "' ya está en uso. Por favor, elige otro.");
+            return;
+        }
+
+        try {
+            // 2. Crear usuario en Firebase Authentication
+            const userCredential = await createUserWithEmailAndPassword(auth, email, contrasena);
+            const user = userCredential.user;
+
+            // 3. Guardar el nombre de usuario y UID en Firestore
+            // Usamos el UID de Firebase Auth como ID del documento para que siempre sea único y fácil de recuperar
+            await addDoc(collection(db, "usuarios"), { // Se usa addDoc para que Firestore genere el ID, pero se guarda el UID del usuario
+                uid: user.uid, // Guardamos el UID para poder buscar el nombre de usuario
+                userName: username,
+                email: email, // Opcional: para referencia
+                createdAt: Date.now()
+            });
+
+
+            alert("Cuenta creada y sesión iniciada.");
+            // onAuthStateChanged se encargará de actualizar la UI
+            // Limpiar campos después de registro exitoso
+            document.getElementById('nuevoEmail').value = '';
+            document.getElementById('nuevaContrasena').value = '';
+            document.getElementById('nuevoNombreUsuario').value = '';
+
+        } catch (error) {
+            const errorMessage = error.message;
+            alert(`Error al registrar: ${errorMessage}`);
+            console.error("Error de registro:", error);
+        }
     }
 
     function iniciarSesion() {
@@ -345,7 +411,9 @@
 
       signInWithEmailAndPassword(auth, email, contrasena)
         .then((userCredential) => {
-          // Sesión iniciada. onAuthStateChanged lo manejará.
+          // Sesión iniciada. onAuthStateChanged lo manejará para mostrar el foro.
+          document.getElementById('usuario').value = ''; // Limpiar campo de email
+          document.getElementById('contrasena').value = ''; // Limpiar campo de contraseña
         })
         .catch((error) => {
           const errorMessage = error.message;
@@ -387,7 +455,7 @@
     }
 
     async function publicar() {
-      if (!usuarioActual) {
+      if (!usuarioActual) { // usuarioActual ahora es el nombre de usuario
         alert("Debes iniciar sesión para publicar.");
         return;
       }
@@ -406,7 +474,8 @@
       try {
         // Añadir un nuevo documento a la colección 'publicaciones' en Firestore
         await addDoc(collection(db, "publicaciones"), {
-          autor: usuarioActual, // El email del usuario autenticado
+          autor: usuarioActual, // El NOMBRE DE USUARIO autenticado
+          autorUid: usuarioAuthId, // El UID del usuario para verificación de propiedad
           partido: partido,
           apuesta: apuesta,
           hora: hora,
@@ -453,6 +522,7 @@
         // dentro del documento de la publicación padre.
         await addDoc(collection(db, "publicaciones", postId, "comentarios"), {
           autor: usuarioActual,
+          autorUid: usuarioAuthId, // UID del usuario que comenta
           texto: texto,
           likes: 0,
           dislikes: 0,
@@ -492,7 +562,7 @@
         return;
       }
 
-      const key = `${usuarioActual}_${elementoId}`;
+      const key = `${usuarioAuthId}_${elementoId}`; // Usar UID para rastrear likes/dislikes
       const estadoPrevio = likes.get(key); // Estado del like/dislike del USUARIO ACTUAL
 
       let currentLikes = parseInt(elemento.querySelector('[onclick*="darLikeDislike(this, \'like\')] span').textContent);
@@ -554,11 +624,10 @@
       const post = btn.closest('.post');
       const postId = post.dataset.id; // El ID del documento en Firestore
 
-      const autorElement = post.querySelector('strong');
-      const autorPublicacion = autorElement ? autorElement.textContent : ''; // Autor mostrado en la UI
+      const autorUidPublicacion = post.dataset.autorUid; // Obtener el UID del autor de la publicación
 
-      // Para una seguridad robusta, también deberías verificar el autor en las reglas de seguridad de Firebase.
-      if (autorPublicacion !== usuarioActual) {
+      // Verificar que el UID del usuario actual coincida con el UID del autor de la publicación
+      if (autorUidPublicacion !== usuarioAuthId) {
         alert("Solo puedes borrar tus propias publicaciones.");
         return;
       }
@@ -595,6 +664,8 @@
           const div = document.createElement('div');
           div.className = 'post';
           div.dataset.id = postId; // Guarda el ID de Firebase para usarlo en likes/comments
+          div.dataset.autorUid = data.autorUid; // Guarda el UID del autor para verificación de borrado
+
           div.innerHTML = `
               <strong onclick="verPerfil('${data.autor}')" style="cursor:pointer;color:var(--accent-color)">${data.autor}</strong>: ${data.partido} - ${data.apuesta}<br>${data.fecha} ${data.hora}<br>${data.comentario}
               <div class='like-dislike'>
@@ -608,7 +679,7 @@
                   <div class='main-comments hidden'></div>
               </div>
               <div class='edit-delete'>
-                  ${usuarioActual === data.autor ? `<button onclick='borrar(this)'>🗑️</button>` : ''}
+                  ${usuarioAuthId === data.autorUid ? `<button onclick='borrar(this)'>🗑️</button>` : ''}
               </div>
           `;
           publicacionesDiv.appendChild(div);
@@ -673,10 +744,10 @@
       const nestedCommentsDiv = comment.querySelector('.nested-comments');
       if (nestedCommentsDiv.classList.contains('hidden')) {
         nestedCommentsDiv.classList.remove('hidden');
-        btn.textContent = `Ocultar respuestas (${nestedCommentsDiv.children.length})`;
+        btn.textContent = `Mostrar respuestas (${nestedCommentsDiv.children.length})`;
       } else {
         nestedCommentsDiv.classList.add('hidden');
-        btn.textContent = `Mostrar respuestas (${nestedCommentsDiv.children.length})`;
+        btn.textContent = `Ocultar respuestas (${nestedCommentsDiv.children.length})`;
       }
     }
   </script>
@@ -695,8 +766,7 @@
 
   <div id="registro" class="section active"> <div class="form-section">
       <h2>Regístrate</h2>
-      <input type="email" id="nuevoUsuario" placeholder="Email (será tu nombre de usuario)">
-      <input type="password" id="nuevaContrasena" placeholder="Contraseña">
+      <input type="text" id="nuevoNombreUsuario" placeholder="Nombre de usuario (Único)"> <input type="email" id="nuevoEmail" placeholder="Email"> <input type="password" id="nuevaContrasena" placeholder="Contraseña">
       <button onclick="registrarse()">Crear cuenta</button>
       <a href="#" onclick="mostrarLoginScreen()">¿Ya tienes cuenta? Inicia sesión</a>
     </div>
