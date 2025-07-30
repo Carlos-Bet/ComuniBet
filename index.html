@@ -222,8 +222,8 @@
     window.deleteDoc = deleteDoc;
     window.doc = doc;
     window.updateDoc = updateDoc;
-    window.getDocs = getDocs; // Añadido para verificar unicidad de nombre de usuario
-    window.where = where;     // Añadido para verificar unicidad de nombre de usuario
+    window.getDocs = getDocs;
+    window.where = where;
     window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
     window.signInWithEmailAndPassword = signInWithEmailAndPassword;
     window.signOut = signOut;
@@ -236,7 +236,7 @@
     let likes = new Map(); // Para rastrear likes/dislikes LOCALES del usuario
 
     // Escucha cambios en el estado de autenticación de Firebase
-    onAuthStateChanged(auth, async (user) => { // async para usar await en getUserNameByUid
+    onAuthStateChanged(auth, async (user) => {
       if (user) {
         // Usuario logueado en Firebase Auth
         usuarioAuthId = user.uid;
@@ -251,8 +251,8 @@
           document.getElementById('nombrePerfil').textContent = userName; // Muestra el nombre de usuario en el perfil
           cargarPublicaciones(); // Carga las publicaciones desde la base de datos
         } else {
-          // Si el usuario autenticado no tiene un nombre de usuario en Firestore (posible si borraste la colección usuarios)
-          alert("Error: Nombre de usuario no encontrado. Por favor, contacta al soporte.");
+          // Si el usuario autenticado no tiene un nombre de usuario en Firestore (posible si las reglas impidieron la creación)
+          alert("Error: Nombre de usuario no encontrado en la base de datos. Por favor, asegúrate de haberte registrado correctamente o contacta al soporte.");
           signOut(auth); // Forzar cierre de sesión
         }
 
@@ -360,9 +360,9 @@
 
     // ** FUNCIONES DE AUTENTICACIÓN (¡MODIFICADO PARA FIREBASE Y NOMBRE DE USUARIO!) **
     async function registrarse() {
-        const email = document.getElementById('nuevoEmail').value; // CAMBIADO ID DE INPUT
+        const email = document.getElementById('nuevoEmail').value;
         const contrasena = document.getElementById('nuevaContrasena').value;
-        const username = document.getElementById('nuevoNombreUsuario').value; // NUEVO INPUT
+        const username = document.getElementById('nuevoNombreUsuario').value;
 
         if (!email || !contrasena || !username) {
             alert("Por favor, completa todos los campos (email, contraseña, nombre de usuario).");
@@ -382,26 +382,36 @@
             const user = userCredential.user;
 
             // 3. Guardar el nombre de usuario y UID en Firestore
-            // Usamos el UID de Firebase Auth como ID del documento para que siempre sea único y fácil de recuperar
-            await addDoc(collection(db, "usuarios"), { // Se usa addDoc para que Firestore genere el ID, pero se guarda el UID del usuario
-                uid: user.uid, // Guardamos el UID para poder buscar el nombre de usuario
+            await addDoc(collection(db, "usuarios"), {
+                uid: user.uid,
                 userName: username,
-                email: email, // Opcional: para referencia
+                email: email,
                 createdAt: Date.now()
             });
 
-
-            alert("Cuenta creada y sesión iniciada.");
-            // onAuthStateChanged se encargará de actualizar la UI
-            // Limpiar campos después de registro exitoso
+            // MODIFICACIÓN: Después de registrar, muestra la pantalla de inicio de sesión
+            alert("Cuenta creada. Por favor, inicia sesión.");
             document.getElementById('nuevoEmail').value = '';
             document.getElementById('nuevaContrasena').value = '';
             document.getElementById('nuevoNombreUsuario').value = '';
+            mostrarLoginScreen(); // Redirige a la pantalla de login
 
         } catch (error) {
             const errorMessage = error.message;
-            alert(`Error al registrar: ${errorMessage}`);
-            console.error("Error de registro:", error);
+            console.error("Error de registro:", error); // Para depuración
+            // Mensajes más amigables para errores comunes de Firebase Auth
+            if (error.code === 'auth/email-already-in-use') {
+                alert("El correo electrónico ya está en uso. Por favor, usa otro o inicia sesión.");
+            } else if (error.code === 'auth/invalid-email') {
+                alert("El formato del correo electrónico es inválido.");
+            } else if (error.code === 'auth/weak-password') {
+                alert("La contraseña es demasiado débil (debe tener al menos 6 caracteres).");
+            } else if (error.code === 'auth/operation-not-allowed') {
+                alert("El registro con correo/contraseña no está habilitado en tu proyecto Firebase. Por favor, contacta al administrador.");
+            }
+            else {
+                alert(`Error al registrar: ${errorMessage}`);
+            }
         }
     }
 
@@ -414,11 +424,24 @@
           // Sesión iniciada. onAuthStateChanged lo manejará para mostrar el foro.
           document.getElementById('usuario').value = ''; // Limpiar campo de email
           document.getElementById('contrasena').value = ''; // Limpiar campo de contraseña
+          // Ya no necesitamos llamar a mostrarSeccion('foro') aquí
+          // onAuthStateChanged se encarga de eso después de obtener el nombre de usuario.
         })
         .catch((error) => {
           const errorMessage = error.message;
-          alert(`Error al iniciar sesión: ${errorMessage}`);
-          console.error("Error de inicio de sesión:", error);
+          console.error("Error de inicio de sesión:", error); // Para depuración
+          // Mensajes más amigables para errores comunes
+          if (error.code === 'auth/invalid-email') {
+              alert("El formato del correo electrónico es inválido.");
+          } else if (error.code === 'auth/user-disabled') {
+              alert("Tu cuenta ha sido deshabilitada.");
+          } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-login-credentials') {
+              alert("Email o contraseña incorrectos.");
+          } else if (error.code === 'auth/too-many-requests') {
+              alert("Demasiados intentos fallidos. Inténtalo de nuevo más tarde.");
+          } else {
+              alert(`Error al iniciar sesión: ${errorMessage}`);
+          }
         });
     }
 
@@ -455,7 +478,7 @@
     }
 
     async function publicar() {
-      if (!usuarioActual) { // usuarioActual ahora es el nombre de usuario
+      if (!usuarioActual) {
         alert("Debes iniciar sesión para publicar.");
         return;
       }
@@ -472,10 +495,9 @@
       }
 
       try {
-        // Añadir un nuevo documento a la colección 'publicaciones' en Firestore
         await addDoc(collection(db, "publicaciones"), {
-          autor: usuarioActual, // El NOMBRE DE USUARIO autenticado
-          autorUid: usuarioAuthId, // El UID del usuario para verificación de propiedad
+          autor: usuarioActual,
+          autorUid: usuarioAuthId,
           partido: partido,
           apuesta: apuesta,
           hora: hora,
@@ -483,10 +505,9 @@
           comentario: comentario,
           likes: 0,
           dislikes: 0,
-          timestamp: Date.now() // Timestamp para ordenar y saber cuándo se publicó
+          timestamp: Date.now()
         });
 
-        // Limpiar los campos después de publicar
         document.getElementById('partido').value = '';
         document.getElementById('apuesta').value = '';
         document.getElementById('hora').value = '';
@@ -509,7 +530,7 @@
       if (!texto) return;
 
       const postElement = btn.closest('.post');
-      const postId = postElement.dataset.id; // Obtenemos el ID de la publicación padre
+      const postId = postElement.dataset.id;
 
       if (!postId) {
           console.error("No se encontró el ID de la publicación para el comentario.");
@@ -518,17 +539,15 @@
       }
 
       try {
-        // Añadir el comentario como un documento en una subcolección 'comentarios'
-        // dentro del documento de la publicación padre.
         await addDoc(collection(db, "publicaciones", postId, "comentarios"), {
           autor: usuarioActual,
-          autorUid: usuarioAuthId, // UID del usuario que comenta
+          autorUid: usuarioAuthId,
           texto: texto,
           likes: 0,
           dislikes: 0,
           timestamp: Date.now()
         });
-        btn.previousElementSibling.value = ''; // Limpiar el textarea
+        btn.previousElementSibling.value = '';
       } catch (e) {
         console.error("Error al añadir comentario a Firestore: ", e);
         alert("Hubo un error al comentar. Inténtalo de nuevo.");
@@ -544,13 +563,12 @@
       const elemento = btn.closest('.post, .comment');
       if (!elemento) return;
 
-      const elementoId = elemento.dataset.id; // ID del post o comentario
+      const elementoId = elemento.dataset.id;
       if (!elementoId) {
         console.error("ID del elemento no encontrado para like/dislike.");
         return;
       }
 
-      // Determinar si es un post o un comentario para la ruta de Firestore
       let docRefPath;
       if (elemento.classList.contains('post')) {
         docRefPath = `publicaciones/${elementoId}`;
@@ -562,8 +580,8 @@
         return;
       }
 
-      const key = `${usuarioAuthId}_${elementoId}`; // Usar UID para rastrear likes/dislikes
-      const estadoPrevio = likes.get(key); // Estado del like/dislike del USUARIO ACTUAL
+      const key = `${usuarioAuthId}_${elementoId}`;
+      const estadoPrevio = likes.get(key);
 
       let currentLikes = parseInt(elemento.querySelector('[onclick*="darLikeDislike(this, \'like\')] span').textContent);
       let currentDislikes = parseInt(elemento.querySelector('[onclick*="darLikeDislike(this, \'dislike\')] span').textContent);
@@ -571,22 +589,19 @@
       let newLikes = currentLikes;
       let newDislikes = currentDislikes;
 
-      // Lógica para actualizar los contadores
-      if (estadoPrevio === tipo) { // Ya había dado este tipo, lo quita
+      if (estadoPrevio === tipo) {
           likes.delete(key);
           if (tipo === 'like') {
               newLikes--;
           } else {
               newDislikes--;
           }
-      } else { // No había dado este tipo o había dado el opuesto
-          // Si había un estado previo, lo revertimos
+      } else {
           if (estadoPrevio === 'like') {
               newLikes--;
           } else if (estadoPrevio === 'dislike') {
               newDislikes--;
           }
-          // Establecemos el nuevo estado
           likes.set(key, tipo);
           if (tipo === 'like') {
               newLikes++;
@@ -596,16 +611,13 @@
       }
 
       try {
-          // Actualizar el documento en Firestore
           await updateDoc(doc(db, docRefPath), {
               likes: newLikes,
               dislikes: newDislikes
           });
-          // La UI se actualizará automáticamente por el onSnapshot listener
       } catch (e) {
           console.error("Error al actualizar likes/dislikes en Firestore:", e);
           alert("Hubo un error al procesar tu like/dislike. Inténtalo de nuevo.");
-          // Si hay un error en la BD, revertir el cambio local en 'likes' Map
           if (estadoPrevio) {
               likes.set(key, estadoPrevio);
           } else {
@@ -622,11 +634,10 @@
       }
 
       const post = btn.closest('.post');
-      const postId = post.dataset.id; // El ID del documento en Firestore
+      const postId = post.dataset.id;
 
-      const autorUidPublicacion = post.dataset.autorUid; // Obtener el UID del autor de la publicación
+      const autorUidPublicacion = post.dataset.autorUid;
 
-      // Verificar que el UID del usuario actual coincida con el UID del autor de la publicación
       if (autorUidPublicacion !== usuarioAuthId) {
         alert("Solo puedes borrar tus propias publicaciones.");
         return;
@@ -634,10 +645,8 @@
 
       if (confirm("¿Estás seguro de que quieres borrar esta publicación y todos sus comentarios?")) {
         try {
-          // Eliminar el documento de la publicación en Firestore
           await deleteDoc(doc(db, "publicaciones", postId));
           console.log("Publicación borrada con éxito de Firestore.");
-          // La UI se actualizará automáticamente por el onSnapshot listener
         } catch (e) {
           console.error("Error al borrar publicación de Firestore:", e);
           alert("Hubo un error al borrar la publicación. Inténtalo de nuevo.");
@@ -645,26 +654,24 @@
       }
     }
 
-    // ** LÓGICA PARA CARGAR Y ACTUALIZAR LA UI EN TIEMPO REAL (¡NUEVO!) **
+    // ** LÓGICA PARA CARGAR Y ACTUALIZAR LA UI EN TIEMPO REAL **
 
     function cargarPublicaciones() {
       const publicacionesDiv = document.getElementById('publicaciones');
-      publicacionesDiv.innerHTML = ''; // Limpiar publicaciones existentes al recargar
+      publicacionesDiv.innerHTML = '';
 
-      // Consultar publicaciones ordenadas por timestamp descendente (más reciente primero)
       const q = query(collection(db, "publicaciones"), orderBy("timestamp", "desc"));
 
-      // onSnapshot se mantiene escuchando cambios en tiempo real
       onSnapshot(q, (snapshot) => {
-        publicacionesDiv.innerHTML = ''; // Limpiar y redibujar cada vez que hay un cambio
+        publicacionesDiv.innerHTML = '';
         snapshot.forEach((doc) => {
           const data = doc.data();
-          const postId = doc.id; // Obtiene el ID único de Firebase para este documento
+          const postId = doc.id;
 
           const div = document.createElement('div');
           div.className = 'post';
-          div.dataset.id = postId; // Guarda el ID de Firebase para usarlo en likes/comments
-          div.dataset.autorUid = data.autorUid; // Guarda el UID del autor para verificación de borrado
+          div.dataset.id = postId;
+          div.dataset.autorUid = data.autorUid;
 
           div.innerHTML = `
               <strong onclick="verPerfil('${data.autor}')" style="cursor:pointer;color:var(--accent-color)">${data.autor}</strong>: ${data.partido} - ${data.apuesta}<br>${data.fecha} ${data.hora}<br>${data.comentario}
@@ -684,7 +691,6 @@
           `;
           publicacionesDiv.appendChild(div);
 
-          // Cargar comentarios para cada publicación
           cargarComentarios(postId, div.querySelector('.main-comments'), div.querySelector('.toggle-comments-button'));
         });
       }, (error) => {
@@ -692,20 +698,17 @@
       });
     }
 
-    // Función para cargar comentarios de una publicación específica
     function cargarComentarios(postId, commentsContainer, toggleButton) {
-      // Consulta los comentarios de la subcolección 'comentarios' de un post
       const qComments = query(collection(db, "publicaciones", postId, "comentarios"), orderBy("timestamp", "asc"));
 
       onSnapshot(qComments, (snapshot) => {
-        commentsContainer.innerHTML = ''; // Limpiar antes de volver a dibujar
+        commentsContainer.innerHTML = '';
         snapshot.forEach((doc) => {
           const data = doc.data();
-          const commentId = doc.id; // ID del comentario
+          const commentId = doc.id;
 
-          const div = crearElementoComentario(data.texto, data.autor, data.likes || 0, data.dislikes || 0); // Reutiliza tu función
-          div.dataset.id = commentId; // Guarda el ID del comentario para likes/respuestas
-          // Aquí puedes añadir la lógica para editar/borrar comentarios anidados si lo deseas
+          const div = crearElementoComentario(data.texto, data.autor, data.likes || 0, data.dislikes || 0);
+          div.dataset.id = commentId;
           commentsContainer.appendChild(div);
         });
 
@@ -726,7 +729,7 @@
     }
 
 
-    // ** FUNCIONES DE TOGGLE (NO MODIFICADAS, YA FUNCIONAN CON LA NUEVA LÓGICA) **
+    // ** FUNCIONES DE TOGGLE **
     function toggleComentariosPrincipales(btn) {
       const post = btn.closest('.post');
       const mainCommentsDiv = post.querySelector('.main-comments');
@@ -764,15 +767,19 @@
     <div class="notification-icon" onclick="mostrarNotificaciones()">🔔<span id="noti-count">0</span></div>
   </nav>
 
-  <div id="registro" class="section active"> <div class="form-section">
+  <div id="registro" class="section active">
+    <div class="form-section">
       <h2>Regístrate</h2>
-      <input type="text" id="nuevoNombreUsuario" placeholder="Nombre de usuario (Único)"> <input type="email" id="nuevoEmail" placeholder="Email"> <input type="password" id="nuevaContrasena" placeholder="Contraseña">
+      <input type="text" id="nuevoNombreUsuario" placeholder="Nombre de usuario (Único)">
+      <input type="email" id="nuevoEmail" placeholder="Email">
+      <input type="password" id="nuevaContrasena" placeholder="Contraseña">
       <button onclick="registrarse()">Crear cuenta</button>
       <a href="#" onclick="mostrarLoginScreen()">¿Ya tienes cuenta? Inicia sesión</a>
     </div>
   </div>
 
-  <div id="login" class="section"> <div class="form-section">
+  <div id="login" class="section">
+    <div class="form-section">
       <h2>Iniciar Sesión</h2>
       <input type="email" id="usuario" placeholder="Email">
       <input type="password" id="contrasena" placeholder="Contraseña">
