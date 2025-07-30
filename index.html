@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comunibet</title>
+  <style>
+    :root {
+      --bg-color: #121212;
+      --text-color: #fff;
+      --header-color: #1e1e1e;
+      --nav-color: #333;
+      --button-bg: #444;
+      --accent-color: #1e90ff;
+    }
+
+    body.light {
+      --bg-color: #f5f5f5;
+      --text-color: #000;
+      --header-color: #e0e0e0;
+      --nav-color: #ccc;
+      --button-bg: #ddd;
+      --accent-color: #0077cc;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    header {
+      background-color: var(--header-color);
+      padding: 1rem;
+      text-align: center;
+      font-size: 2rem;
+      font-weight: bold;
+    }
+
+    nav {
+      background-color: var(--nav-color);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    nav button {
+      background-color: var(--button-bg);
+      color: var(--text-color);
+      border: none;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .section {
+      display: none;
+      padding: 1rem;
+    }
+
+    .active {
+      display: block;
+    }
+
+    .form-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-width: 300px;
+      margin: auto;
+    }
+
+    .form-section input,
+    .form-section textarea {
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+
+    .form-section button {
+      padding: 0.5rem;
+      font-size: 1rem;
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+    }
+
+    .post {
+      background-color: #222;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+
+    .comment-section {
+      margin-top: 1rem;
+    }
+
+    /* Estilo para los comentarios principales */
+    .comment {
+      background-color: #2b2b2b;
+      padding: 0.8rem;
+      margin-bottom: 0.5rem;
+      border-radius: 4px;
+    }
+
+    /* Estilo para las respuestas anidadas */
+    .nested-comments {
+      margin-left: 2rem;
+      border-left: 2px solid #555;
+      padding-left: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    /* Ocultar elementos por defecto */
+    .hidden {
+      display: none;
+    }
+
+    .toggle-replies-button,
+    .toggle-comments-button {
+      background: none;
+      border: none;
+      color: var(--accent-color);
+      cursor: pointer;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+      padding: 0;
+      text-align: left;
+      width: 100%;
+    }
+
+    .like-dislike button {
+      background: none;
+      border: none;
+      color: var(--accent-color);
+      cursor: pointer;
+      margin-right: 0.5rem;
+    }
+
+    .notification {
+      background-color: var(--button-bg);
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .edit-delete {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+    }
+
+    .edit-delete button {
+      margin-left: 5px;
+      font-size: 0.8rem;
+    }
+
+    .notification-icon {
+      position: relative;
+      margin-left: auto;
+      cursor: pointer;
+    }
+
+    .notification-icon span {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: red;
+      color: white;
+      border-radius: 50%;
+      padding: 2px 5px;
+      font-size: 0.7rem;
+    }
+
+    @media (max-width: 600px) {
+      nav {
+        flex-direction: column;
+      }
+    }
+  </style>
+
+  <script type="module">
+    // Importa los módulos de Firebase que usarás
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+    // import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js"; // Descomentar si usas Analytics
+
+    // ** TU CONFIGURACIÓN DE FIREBASE (YA INSERTADA) **
+    const firebaseConfig = {
+      apiKey: "AIzaSyAs19oiYivfPYSCl_-xcOFeBQMziZSeBn0",
+      authDomain: "comunibetstudio.firebaseapp.com",
+      projectId: "comunibetstudio",
+      storageBucket: "comunibetstudio.firebasestorage.app",
+      messagingSenderId: "980411984792",
+      appId: "1:980411984792:web:c7ab103a9efe8e121e99ed",
+      measurementId: "G-P6EJLZRTVV" // Puedes quitar esta línea si no usas Google Analytics
+    };
+
+    // Inicializa Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app); // Referencia a Firestore
+    const auth = getAuth(app); // Referencia a Auth
+    // const analytics = getAnalytics(app); // Descomentar si usas Analytics
+
+    // ** Haz que 'db', 'auth' y las funciones de Firestore/Auth sean globales **
+    window.db = db;
+    window.auth = auth;
+    window.collection = collection;
+    window.addDoc = addDoc;
+    window.onSnapshot = onSnapshot;
+    window.query = query;
+    window.orderBy = orderBy;
+    window.deleteDoc = deleteDoc;
+    window.doc = doc;
+    window.updateDoc = updateDoc;
+    window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+    window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+    window.signOut = signOut;
+    window.onAuthStateChanged = onAuthStateChanged;
+  </script>
+  <script>
+    // ** Variables y lógica de autenticación (¡MODIFICADO PARA FIREBASE!) **
+    let usuarioActual = null; // Gestionado por Firebase Auth
+    let likes = new Map(); // Para rastrear likes/dislikes LOCALES del usuario
+
+    // Escucha cambios en el estado de autenticación de Firebase
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // Usuario logueado
+        usuarioActual = user.email; // O user.uid si prefieres el ID único de Firebase
+        mostrarSeccion('foro'); // Muestra el foro automáticamente
+        document.getElementById('main-menu').style.display = 'flex'; // Muestra el menú principal
+        document.getElementById('registro').style.display = 'none'; // Oculta el registro
+        document.getElementById('login').style.display = 'none'; // Oculta el login
+        document.getElementById('nombrePerfil').textContent = user.email;
+        cargarPublicaciones(); // Carga las publicaciones desde la base de datos
+      } else {
+        // Usuario no logueado
+        usuarioActual = null;
+        // Reinicia las secciones, muestra solo login/registro
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById('login').classList.add('active'); // Por defecto, muestra login
+        document.getElementById('main-menu').style.display = 'none'; // Oculta el menú principal
+
+        // Asegúrate de que registro y login sean los únicos visibles al principio
+        document.getElementById('registro').style.display = 'block';
+        document.getElementById('login').style.display = 'block';
+
+        // Oculta el que no está activo inicialmente
+        if (document.getElementById('registro').classList.contains('active')) {
+            document.getElementById('login').style.display = 'none';
+        } else {
+            document.getElementById('registro').style.display = 'none';
+        }
+      }
+    });
+
+    // ** Funciones de UI y Lógica NO relacionadas directamente con Firebase (mantienen su función original) **
+    function toggleModo() {
+      document.body.classList.toggle('light');
+    }
+
+    function mostrarSeccion(id) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      // Asegura que las secciones de autenticación se oculten cuando se navega a otra parte
+      if (id !== 'login' && id !== 'registro') {
+          document.getElementById('registro').style.display = 'none';
+          document.getElementById('login').style.display = 'none';
+      }
+    }
+
+    // Funciones para alternar entre Login y Registro si NO está logueado
+    function mostrarLoginScreen() {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById('login').classList.add('active');
+      document.getElementById('registro').style.display = 'none'; // Asegura que registro se oculte
+      document.getElementById('login').style.display = 'block'; // Asegura que login se muestre
+    }
+
+    function mostrarRegistroScreen() {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById('registro').classList.add('active');
+      document.getElementById('login').style.display = 'none'; // Asegura que login se oculte
+      document.getElementById('registro').style.display = 'block'; // Asegura que registro se muestre
+    }
+
+
+    function verPerfil(nombre) {
+      document.getElementById('nombrePerfil').textContent = nombre;
+      mostrarSeccion('perfil');
+    }
+
+    function mostrarNotificaciones() {
+      alert("No tienes nuevas notificaciones."); // Puedes expandir esto con Firebase si quieres
+    }
+
+    function buscar(valor) {
+      alert("Buscando: " + valor); // Puedes implementar búsqueda en Firestore más adelante
+    }
+
+    function guardarDescripcion() {
+      alert("Descripción guardada"); // Necesitarías Firebase para persistir esto
+    }
+
+    function toggleSeguir() {
+      const btn = document.getElementById("btnSeguir");
+      const count = document.getElementById("contadorSeguidores");
+      if (btn.textContent === "Seguir") {
+        btn.textContent = "Siguiendo";
+        count.textContent = parseInt(count.textContent) + 1;
+      } else {
+        btn.textContent = "Seguir";
+        count.textContent = parseInt(count.textContent) - 1;
+      }
+      // Necesitarías Firebase para persistir los seguidores
+    }
+
+    // ** FUNCIONES DE AUTENTICACIÓN (¡MODIFICADO PARA FIREBASE!) **
+    function registrarse() {
+      const email = document.getElementById('nuevoUsuario').value; // Usamos email para Firebase Auth
+      const contrasena = document.getElementById('nuevaContrasena').value;
+
+      createUserWithEmailAndPassword(auth, email, contrasena)
+        .then((userCredential) => {
+          // Usuario registrado y logueado. onAuthStateChanged lo manejará.
+          alert("Cuenta creada y sesión iniciada.");
+        })
+        .catch((error) => {
+          const errorMessage = error.message;
+          alert(`Error al registrar: ${errorMessage}`);
+          console.error("Error de registro:", error);
+        });
+    }
+
+    function iniciarSesion() {
+      const email = document.getElementById('usuario').value;
+      const contrasena = document.getElementById('contrasena').value;
+
+      signInWithEmailAndPassword(auth, email, contrasena)
+        .then((userCredential) => {
+          // Sesión iniciada. onAuthStateChanged lo manejará.
+        })
+        .catch((error) => {
+          const errorMessage = error.message;
+          alert(`Error al iniciar sesión: ${errorMessage}`);
+          console.error("Error de inicio de sesión:", error);
+        });
+    }
+
+    function cerrarSesion() {
+      signOut(auth).then(() => {
+        // Sesión cerrada. onAuthStateChanged lo manejará.
+        alert("Sesión cerrada.");
+      }).catch((error) => {
+        console.error("Error al cerrar sesión:", error);
+      });
+    }
+
+
+    // ** FUNCIONES DE PUBLICACIONES Y COMENTARIOS (¡MODIFICADO PARA FIREBASE!) **
+
+    // Función auxiliar para crear el elemento DOM de un comentario (sin interacción con DB)
+    function crearElementoComentario(texto, autor, likes = 0, dislikes = 0) {
+      const div = document.createElement('div');
+      div.className = 'comment';
+      div.innerHTML = `
+            <strong>${autor}</strong>: ${texto}
+            <div class='like-dislike'>
+                <button onclick="darLikeDislike(this, 'like')">👍 <span>${likes}</span></button>
+                <button onclick="darLikeDislike(this, 'dislike')">👎 <span>${dislikes}</span></button>
+            </div>
+            <div class='comment-input-area'>
+                <textarea placeholder='Escribe una respuesta...'></textarea>
+                <button onclick='comentar(this)'>Responder</button>
+            </div>
+            <button class="toggle-replies-button" onclick="toggleRespuestas(this)" style="display:none;">Mostrar respuestas (0)</button>
+            <div class='nested-comments hidden'></div>
+        `;
+      return div;
+    }
+
+    async function publicar() {
+      if (!usuarioActual) {
+        alert("Debes iniciar sesión para publicar.");
+        return;
+      }
+
+      const partido = document.getElementById('partido').value;
+      const apuesta = document.getElementById('apuesta').value;
+      const hora = document.getElementById('hora').value;
+      const fecha = document.getElementById('fecha').value;
+      const comentario = document.getElementById('comentario').value;
+
+      if (!partido || !apuesta || !hora || !fecha || !comentario) {
+          alert("Por favor, completa todos los campos de la publicación.");
+          return;
+      }
+
+      try {
+        // Añadir un nuevo documento a la colección 'publicaciones' en Firestore
+        await addDoc(collection(db, "publicaciones"), {
+          autor: usuarioActual, // El email del usuario autenticado
+          partido: partido,
+          apuesta: apuesta,
+          hora: hora,
+          fecha: fecha,
+          comentario: comentario,
+          likes: 0,
+          dislikes: 0,
+          timestamp: Date.now() // Timestamp para ordenar y saber cuándo se publicó
+        });
+
+        // Limpiar los campos después de publicar
+        document.getElementById('partido').value = '';
+        document.getElementById('apuesta').value = '';
+        document.getElementById('hora').value = '';
+        document.getElementById('fecha').value = '';
+        document.getElementById('comentario').value = '';
+
+      } catch (e) {
+        console.error("Error al añadir publicación a Firestore: ", e);
+        alert("Hubo un error al publicar. Inténtalo de nuevo.");
+      }
+    }
+
+    async function comentar(btn) {
+      if (!usuarioActual) {
+        alert("Debes iniciar sesión para comentar.");
+        return;
+      }
+
+      const texto = btn.previousElementSibling.value;
+      if (!texto) return;
+
+      const postElement = btn.closest('.post');
+      const postId = postElement.dataset.id; // Obtenemos el ID de la publicación padre
+
+      if (!postId) {
+          console.error("No se encontró el ID de la publicación para el comentario.");
+          alert("No se pudo asociar el comentario a una publicación.");
+          return;
+      }
+
+      try {
+        // Añadir el comentario como un documento en una subcolección 'comentarios'
+        // dentro del documento de la publicación padre.
+        await addDoc(collection(db, "publicaciones", postId, "comentarios"), {
+          autor: usuarioActual,
+          texto: texto,
+          likes: 0,
+          dislikes: 0,
+          timestamp: Date.now()
+        });
+        btn.previousElementSibling.value = ''; // Limpiar el textarea
+      } catch (e) {
+        console.error("Error al añadir comentario a Firestore: ", e);
+        alert("Hubo un error al comentar. Inténtalo de nuevo.");
+      }
+    }
+
+    async function darLikeDislike(btn, tipo) {
+      if (!usuarioActual) {
+        alert("Debes iniciar sesión para dar 'Me gusta' o 'No me gusta'.");
+        return;
+      }
+
+      const elemento = btn.closest('.post, .comment');
+      if (!elemento) return;
+
+      const elementoId = elemento.dataset.id; // ID del post o comentario
+      if (!elementoId) {
+        console.error("ID del elemento no encontrado para like/dislike.");
+        return;
+      }
+
+      // Determinar si es un post o un comentario para la ruta de Firestore
+      let docRefPath;
+      if (elemento.classList.contains('post')) {
+        docRefPath = `publicaciones/${elementoId}`;
+      } else if (elemento.classList.contains('comment')) {
+        const postId = elemento.closest('.post').dataset.id;
+        docRefPath = `publicaciones/${postId}/comentarios/${elementoId}`;
+      } else {
+        console.error("Tipo de elemento desconocido para like/dislike.");
+        return;
+      }
+
+      const key = `${usuarioActual}_${elementoId}`;
+      const estadoPrevio = likes.get(key); // Estado del like/dislike del USUARIO ACTUAL
+
+      let currentLikes = parseInt(elemento.querySelector('[onclick*="darLikeDislike(this, \'like\')] span').textContent);
+      let currentDislikes = parseInt(elemento.querySelector('[onclick*="darLikeDislike(this, \'dislike\')] span').textContent);
+
+      let newLikes = currentLikes;
+      let newDislikes = currentDislikes;
+
+      // Lógica para actualizar los contadores
+      if (estadoPrevio === tipo) { // Ya había dado este tipo, lo quita
+          likes.delete(key);
+          if (tipo === 'like') {
+              newLikes--;
+          } else {
+              newDislikes--;
+          }
+      } else { // No había dado este tipo o había dado el opuesto
+          // Si había un estado previo, lo revertimos
+          if (estadoPrevio === 'like') {
+              newLikes--;
+          } else if (estadoPrevio === 'dislike') {
+              newDislikes--;
+          }
+          // Establecemos el nuevo estado
+          likes.set(key, tipo);
+          if (tipo === 'like') {
+              newLikes++;
+          } else {
+              newDislikes++;
+          }
+      }
+
+      try {
+          // Actualizar el documento en Firestore
+          await updateDoc(doc(db, docRefPath), {
+              likes: newLikes,
+              dislikes: newDislikes
+          });
+          // La UI se actualizará automáticamente por el onSnapshot listener
+      } catch (e) {
+          console.error("Error al actualizar likes/dislikes en Firestore:", e);
+          alert("Hubo un error al procesar tu like/dislike. Inténtalo de nuevo.");
+          // Si hay un error en la BD, revertir el cambio local en 'likes' Map
+          if (estadoPrevio) {
+              likes.set(key, estadoPrevio);
+          } else {
+              likes.delete(key);
+          }
+      }
+    }
+
+
+    async function borrar(btn) {
+      if (!usuarioActual) {
+        alert("Debes iniciar sesión para borrar.");
+        return;
+      }
+
+      const post = btn.closest('.post');
+      const postId = post.dataset.id; // El ID del documento en Firestore
+
+      const autorElement = post.querySelector('strong');
+      const autorPublicacion = autorElement ? autorElement.textContent : ''; // Autor mostrado en la UI
+
+      // Para una seguridad robusta, también deberías verificar el autor en las reglas de seguridad de Firebase.
+      if (autorPublicacion !== usuarioActual) {
+        alert("Solo puedes borrar tus propias publicaciones.");
+        return;
+      }
+
+      if (confirm("¿Estás seguro de que quieres borrar esta publicación y todos sus comentarios?")) {
+        try {
+          // Eliminar el documento de la publicación en Firestore
+          await deleteDoc(doc(db, "publicaciones", postId));
+          console.log("Publicación borrada con éxito de Firestore.");
+          // La UI se actualizará automáticamente por el onSnapshot listener
+        } catch (e) {
+          console.error("Error al borrar publicación de Firestore:", e);
+          alert("Hubo un error al borrar la publicación. Inténtalo de nuevo.");
+        }
+      }
+    }
+
+    // ** LÓGICA PARA CARGAR Y ACTUALIZAR LA UI EN TIEMPO REAL (¡NUEVO!) **
+
+    function cargarPublicaciones() {
+      const publicacionesDiv = document.getElementById('publicaciones');
+      publicacionesDiv.innerHTML = ''; // Limpiar publicaciones existentes al recargar
+
+      // Consultar publicaciones ordenadas por timestamp descendente (más reciente primero)
+      const q = query(collection(db, "publicaciones"), orderBy("timestamp", "desc"));
+
+      // onSnapshot se mantiene escuchando cambios en tiempo real
+      onSnapshot(q, (snapshot) => {
+        publicacionesDiv.innerHTML = ''; // Limpiar y redibujar cada vez que hay un cambio
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const postId = doc.id; // Obtiene el ID único de Firebase para este documento
+
+          const div = document.createElement('div');
+          div.className = 'post';
+          div.dataset.id = postId; // Guarda el ID de Firebase para usarlo en likes/comments
+          div.innerHTML = `
+              <strong onclick="verPerfil('${data.autor}')" style="cursor:pointer;color:var(--accent-color)">${data.autor}</strong>: ${data.partido} - ${data.apuesta}<br>${data.fecha} ${data.hora}<br>${data.comentario}
+              <div class='like-dislike'>
+                  <button onclick="darLikeDislike(this, 'like')">👍 <span>${data.likes || 0}</span></button>
+                  <button onclick="darLikeDislike(this, 'dislike')">👎 <span>${data.dislikes || 0}</span></button>
+              </div>
+              <div class='comment-section'>
+                  <textarea placeholder='Escribe un comentario...'></textarea>
+                  <button onclick='comentar(this)'>Comentar</button>
+                  <button class="toggle-comments-button" onclick="toggleComentariosPrincipales(this)">Mostrar comentarios (0)</button>
+                  <div class='main-comments hidden'></div>
+              </div>
+              <div class='edit-delete'>
+                  ${usuarioActual === data.autor ? `<button onclick='borrar(this)'>🗑️</button>` : ''}
+              </div>
+          `;
+          publicacionesDiv.appendChild(div);
+
+          // Cargar comentarios para cada publicación
+          cargarComentarios(postId, div.querySelector('.main-comments'), div.querySelector('.toggle-comments-button'));
+        });
+      }, (error) => {
+        console.error("Error al cargar publicaciones:", error);
+      });
+    }
+
+    // Función para cargar comentarios de una publicación específica
+    function cargarComentarios(postId, commentsContainer, toggleButton) {
+      // Consulta los comentarios de la subcolección 'comentarios' de un post
+      const qComments = query(collection(db, "publicaciones", postId, "comentarios"), orderBy("timestamp", "asc"));
+
+      onSnapshot(qComments, (snapshot) => {
+        commentsContainer.innerHTML = ''; // Limpiar antes de volver a dibujar
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const commentId = doc.id; // ID del comentario
+
+          const div = crearElementoComentario(data.texto, data.autor, data.likes || 0, data.dislikes || 0); // Reutiliza tu función
+          div.dataset.id = commentId; // Guarda el ID del comentario para likes/respuestas
+          // Aquí puedes añadir la lógica para editar/borrar comentarios anidados si lo deseas
+          commentsContainer.appendChild(div);
+        });
+
+        const numComments = commentsContainer.children.length;
+        if (numComments > 0) {
+          toggleButton.style.display = 'block';
+          if (commentsContainer.classList.contains('hidden')) {
+            toggleButton.textContent = `Mostrar comentarios (${numComments})`;
+          } else {
+            toggleButton.textContent = `Ocultar comentarios (${numComments})`;
+          }
+        } else {
+          toggleButton.style.display = 'none';
+        }
+      }, (error) => {
+        console.error("Error al cargar comentarios:", error);
+      });
+    }
+
+
+    // ** FUNCIONES DE TOGGLE (NO MODIFICADAS, YA FUNCIONAN CON LA NUEVA LÓGICA) **
+    function toggleComentariosPrincipales(btn) {
+      const post = btn.closest('.post');
+      const mainCommentsDiv = post.querySelector('.main-comments');
+      if (mainCommentsDiv.classList.contains('hidden')) {
+        mainCommentsDiv.classList.remove('hidden');
+        btn.textContent = `Ocultar comentarios (${mainCommentsDiv.children.length})`;
+      } else {
+        mainCommentsDiv.classList.add('hidden');
+        btn.textContent = `Mostrar comentarios (${mainCommentsDiv.children.length})`;
+      }
+    }
+
+    function toggleRespuestas(btn) {
+      const comment = btn.closest('.comment');
+      const nestedCommentsDiv = comment.querySelector('.nested-comments');
+      if (nestedCommentsDiv.classList.contains('hidden')) {
+        nestedCommentsDiv.classList.remove('hidden');
+        btn.textContent = `Ocultar respuestas (${nestedCommentsDiv.children.length})`;
+      } else {
+        nestedCommentsDiv.classList.add('hidden');
+        btn.textContent = `Mostrar respuestas (${nestedCommentsDiv.children.length})`;
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <header id="site-title">Comunibet <button onclick="toggleModo()">🌗</button></header>
+  <nav id="main-menu" style="display: none;">
+    <button onclick="mostrarSeccion('foro')">Foro</button>
+    <button onclick="mostrarSeccion('perfil')">Mi Perfil</button>
+    <button onclick="mostrarSeccion('contacto')">Contacto</button>
+    <button onclick="mostrarSeccion('comunidad')">Comunidad</button>
+    <button onclick="cerrarSesion()">Cerrar sesión</button>
+    <div class="notification-icon" onclick="mostrarNotificaciones()">🔔<span id="noti-count">0</span></div>
+  </nav>
+
+  <div id="registro" class="section active"> <div class="form-section">
+      <h2>Regístrate</h2>
+      <input type="email" id="nuevoUsuario" placeholder="Email (será tu nombre de usuario)">
+      <input type="password" id="nuevaContrasena" placeholder="Contraseña">
+      <button onclick="registrarse()">Crear cuenta</button>
+      <a href="#" onclick="mostrarLoginScreen()">¿Ya tienes cuenta? Inicia sesión</a>
+    </div>
+  </div>
+
+  <div id="login" class="section"> <div class="form-section">
+      <h2>Iniciar Sesión</h2>
+      <input type="email" id="usuario" placeholder="Email">
+      <input type="password" id="contrasena" placeholder="Contraseña">
+      <button onclick="iniciarSesion()">Entrar</button>
+      <a href="#" onclick="mostrarRegistroScreen()">¿No tienes cuenta? Regístrate aquí</a>
+    </div>
+  </div>
+
+  <div id="foro" class="section">
+    <div class="form-section">
+      <h2>Publicar Apuesta</h2>
+      <input type="text" id="partido" placeholder="Partido">
+      <input type="text" id="apuesta" placeholder="Tu apuesta">
+      <input type="time" id="hora">
+      <input type="date" id="fecha">
+      <textarea id="comentario" placeholder="Comentario adicional"></textarea>
+      <button onclick="publicar()">Publicar</button>
+    </div>
+    <input type="text" placeholder="Buscar por usuario o partido..." oninput="buscar(this.value)">
+    <div id="publicaciones"></div>
+  </div>
+
+  <div id="perfil" class="section">
+    <h2 id="nombrePerfil">Mi Perfil</h2>
+    <p>Descripción:</p>
+    <textarea id="descripcionPerfil" placeholder="Tu descripción..." onchange="guardarDescripcion()"></textarea>
+    <p>Seguidores: <span id="contadorSeguidores">0</span></p>
+    <button onclick="toggleSeguir()" id="btnSeguir">Seguir</button>
+  </div>
+
+  <div id="contacto" class="section">
+    <h2>Contacto</h2>
+    <p><img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" width="20"> Instagram: carlos.m1k</p>
+    <p><img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" width="20"> WhatsApp: 3203297982</p>
+  </div>
+
+  <div id="comunidad" class="section">
+    <h2>Comunidad</h2>
+    <div id="ranking"></div>
+  </div>
+</body>
+
+</html>
