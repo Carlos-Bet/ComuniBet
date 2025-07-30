@@ -195,14 +195,13 @@
     // import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
 
     // Your web app's Firebase configuration
-    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
     const firebaseConfig = {
       apiKey: "AIzaSyAs19oiYivfPYSCl_-xcOFeBQMziZSeBn0",
       authDomain: "comunibetstudio.firebaseapp.com",
       projectId: "comunibetstudio",
       storageBucket: "comunibetstudio.firebasestorage.app",
       messagingSenderId: "980411984792",
-      appId: "1:980411984792:web:c7ab103a9efe8e121e99ed", // TU APP ID ORIGINAL
+      appId: "1:980411984792:web:c7ab103a9efe8e121e99ed", // Asegúrate de que este sea tu App ID correcto
       measurementId: "G-P6EJLZRTVV"
     };
 
@@ -212,8 +211,12 @@
     const auth = getAuth(app);
     // const analytics = getAnalytics(app); // Descomentar si usas Analytics
 
-    // ** Haz que las funciones de Firestore/Auth sean globales **
-    // Renombrado onAuthStateChanged a onAuthStateChangedListener para evitar conflictos y mantener el nombre usado en tu segundo script
+    // ** Variables globales para el estado del usuario **
+    window.usuarioActual = null;
+    window.usuarioAuthId = null;
+    window.likes = new Map();
+
+    // ** Hacemos las funciones de Firebase globales para el otro script **
     window.db = db;
     window.auth = auth;
     window.collection = collection;
@@ -229,70 +232,23 @@
     window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
     window.signInWithEmailAndPassword = signInWithEmailAndPassword;
     window.signOut = signOut;
-    window.onAuthStateChangedListener = onAuthStateChanged; // <--- SE HACE GLOBAL CON ESTE NOMBRE
-  </script>
-  <script defer> // ** Variables y lógica de autenticación **
-    let usuarioActual = null;
-    let usuarioAuthId = null;
-    let likes = new Map();
-
-    // Escucha cambios en el estado de autenticación de Firebase
-    onAuthStateChangedListener(auth, async (user) => { // Usamos la variable global renombrada
-      if (user) {
-        console.log("onAuthStateChanged: Usuario autenticado. UID:", user.uid);
-        usuarioAuthId = user.uid;
-        // Obtener el nombre de usuario de Firestore
-        const userName = await getUserNameByUid(user.uid);
-        if (userName) {
-          console.log("onAuthStateChanged: Nombre de usuario encontrado:", userName);
-          usuarioActual = userName;
-          mostrarSeccion('foro');
-          document.getElementById('main-menu').style.display = 'flex';
-          document.getElementById('registro').style.display = 'none';
-          document.getElementById('login').style.display = 'none';
-          document.getElementById('nombrePerfil').textContent = userName;
-          cargarPublicaciones();
-        } else {
-          console.warn("onAuthStateChanged: Usuario autenticado pero nombre de usuario NO ENCONTRADO en Firestore.");
-          alert("Error: Nombre de usuario no encontrado en la base de datos. Por favor, asegúrate de haberte registrado correctamente o contacta al soporte.");
-          signOut(auth);
-        }
-
-      } else {
-        console.log("onAuthStateChanged: No hay usuario autenticado.");
-        usuarioActual = null;
-        usuarioAuthId = null;
-        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-        document.getElementById('login').classList.add('active');
-        document.getElementById('main-menu').style.display = 'none';
-        document.getElementById('registro').style.display = 'block';
-        document.getElementById('login').style.display = 'block';
-
-        if (document.getElementById('registro').classList.contains('active')) {
-            document.getElementById('login').style.display = 'none';
-        } else {
-            document.getElementById('registro').style.display = 'none';
-        }
-      }
-    });
-
-    // ** Funciones auxiliares para nombres de usuario **
-    async function checkIfUserNameExists(username) {
-        const q = query(collection(db, "usuarios"), where("userName", "==", username));
-        const querySnapshot = await getDocs(q);
-        return !querySnapshot.empty;
-    }
-
-    async function getUserNameByUid(uid) {
+    window.onAuthStateChangedListener = onAuthStateChanged; // Exponemos onAuthStateChanged con este nombre
+    window.getUserNameByUid = async function(uid) { // También hacemos esta función global
         const q = query(collection(db, "usuarios"), where("uid", "==", uid));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
             return querySnapshot.docs[0].data().userName;
         }
         return null;
-    }
-
-    // ** Funciones de UI y Lógica NO relacionadas directamente con Firebase **
+    };
+    window.checkIfUserNameExists = async function(username) { // Y esta también
+        const q = query(collection(db, "usuarios"), where("userName", "==", username));
+        const querySnapshot = await getDocs(q);
+        return !querySnapshot.empty;
+    };
+  </script>
+  <script defer>
+    // ** Funciones de UI y Lógica NO relacionadas directamente con Firebase (pero que usan las variables globales) **
     function toggleModo() {
       document.body.classList.toggle('light');
     }
@@ -300,6 +256,7 @@
     function mostrarSeccion(id) {
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
       document.getElementById(id).classList.add('active');
+      // Asegurarse de que las secciones de registro/login se oculten si no son la activa
       if (id !== 'login' && id !== 'registro') {
           document.getElementById('registro').style.display = 'none';
           document.getElementById('login').style.display = 'none';
@@ -349,7 +306,48 @@
       }
     }
 
-    // ** FUNCIONES DE AUTENTICACIÓN **
+    // ** LÓGICA DE AUTENTICACIÓN Y ESTADO DE USUARIO **
+
+    // Escucha cambios en el estado de autenticación de Firebase
+    // ESTA ES LA FUNCIÓN CLAVE QUE SE EJECUTA AL CARGAR LA PÁGINA O AL INICIAR/CERRAR SESIÓN
+    onAuthStateChangedListener(auth, async (user) => {
+      if (user) {
+        console.log("onAuthStateChanged: Usuario autenticado. UID:", user.uid);
+        window.usuarioAuthId = user.uid; // Actualiza la variable global
+        const userName = await window.getUserNameByUid(user.uid); // Usa la función global
+        if (userName) {
+          console.log("onAuthStateChanged: Nombre de usuario encontrado:", userName);
+          window.usuarioActual = userName; // Actualiza la variable global
+          mostrarSeccion('foro'); // Muestra el foro
+          document.getElementById('main-menu').style.display = 'flex';
+          document.getElementById('registro').style.display = 'none';
+          document.getElementById('login').style.display = 'none';
+          document.getElementById('nombrePerfil').textContent = userName;
+          cargarPublicaciones(); // Carga las publicaciones cuando el usuario está listo
+        } else {
+          console.warn("onAuthStateChanged: Usuario autenticado pero nombre de usuario NO ENCONTRADO en Firestore.");
+          alert("Error: Nombre de usuario no encontrado en la base de datos. Por favor, asegúrate de haberte registrado correctamente o contacta al soporte.");
+          signOut(auth); // Desconectar si no se encuentra el nombre de usuario
+        }
+      } else {
+        console.log("onAuthStateChanged: No hay usuario autenticado.");
+        window.usuarioActual = null;
+        window.usuarioAuthId = null;
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById('login').classList.add('active'); // Por defecto, muestra el login
+        document.getElementById('main-menu').style.display = 'none';
+        document.getElementById('registro').style.display = 'block'; // Asegura que el registro sea visible si está activo
+        document.getElementById('login').style.display = 'block'; // Asegura que el login sea visible si está activo
+
+        // Lógica para alternar entre registro y login si ambos están "activos" en el DOM
+        if (document.getElementById('registro').classList.contains('active')) {
+            document.getElementById('login').style.display = 'none';
+        } else {
+            document.getElementById('registro').style.display = 'none';
+        }
+      }
+    });
+
     async function registrarse() {
         const email = document.getElementById('nuevoEmail').value;
         const contrasena = document.getElementById('nuevaContrasena').value;
@@ -360,17 +358,17 @@
             return;
         }
 
-        const usernameExists = await checkIfUserNameExists(username);
+        const usernameExists = await window.checkIfUserNameExists(username);
         if (usernameExists) {
             alert("El nombre de usuario '" + username + "' ya está en uso. Por favor, elige otro.");
             return;
         }
 
         try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, contrasena);
+            const userCredential = await window.createUserWithEmailAndPassword(auth, email, contrasena);
             const user = userCredential.user;
 
-            await addDoc(collection(db, "usuarios"), {
+            await window.addDoc(window.collection(db, "usuarios"), {
                 uid: user.uid,
                 userName: username,
                 email: email,
@@ -381,8 +379,7 @@
             document.getElementById('nuevoEmail').value = '';
             document.getElementById('nuevaContrasena').value = '';
             document.getElementById('nuevoNombreUsuario').value = '';
-            mostrarLoginScreen();
-
+            mostrarLoginScreen(); // Muestra la pantalla de login después del registro
         } catch (error) {
             const errorMessage = error.message;
             console.error("Error de registro:", error);
@@ -401,19 +398,37 @@
         }
     }
 
-    function iniciarSesion() {
+    async function iniciarSesion() {
       const email = document.getElementById('usuario').value;
       const contrasena = document.getElementById('contrasena').value;
 
-      signInWithEmailAndPassword(auth, email, contrasena)
-        .then((userCredential) => {
-          console.log("iniciarSesion: Inicio de sesión exitoso en Firebase Auth.");
-          document.getElementById('usuario').value = '';
-          document.getElementById('contrasena').value = '';
-          // Aquí añadimos la recarga completa de la página
-          location.reload(); 
-        })
-        .catch((error) => {
+      try {
+        const userCredential = await window.signInWithEmailAndPassword(auth, email, contrasena);
+        const user = userCredential.user;
+        console.log("iniciarSesion: Inicio de sesión exitoso en Firebase Auth.");
+
+        // Limpiar campos
+        document.getElementById('usuario').value = '';
+        document.getElementById('contrasena').value = '';
+
+        // Obtener nombre de usuario y actualizar variables globales
+        const userName = await window.getUserNameByUid(user.uid);
+        if (userName) {
+            window.usuarioActual = userName;
+            window.usuarioAuthId = user.uid;
+            document.getElementById('nombrePerfil').textContent = userName;
+            mostrarSeccion('foro'); // ¡Directamente al foro!
+            document.getElementById('main-menu').style.display = 'flex'; // Asegurarse que el menú principal se muestre
+            document.getElementById('registro').style.display = 'none';
+            document.getElementById('login').style.display = 'none';
+            cargarPublicaciones(); // Cargar publicaciones
+        } else {
+            console.warn("iniciarSesion: Usuario autenticado pero nombre de usuario NO ENCONTRADO en Firestore.");
+            alert("Error: Nombre de usuario no encontrado en la base de datos. Por favor, inicia sesión de nuevo o contacta al soporte.");
+            window.signOut(auth); // Desconectar si no se encuentra el nombre
+        }
+
+      } catch (error) {
           const errorMessage = error.message;
           console.error("iniciarSesion: Error al intentar iniciar sesión:", error);
           if (error.code === 'auth/invalid-email') {
@@ -427,19 +442,32 @@
           } else {
               alert(`Error al iniciar sesión: ${errorMessage}`);
           }
-        });
+      }
     }
 
     function cerrarSesion() {
-      signOut(auth).then(() => {
+      window.signOut(auth).then(() => {
         alert("Sesión cerrada.");
-        location.reload(); // También puedes recargar la página al cerrar sesión
+        // Restablecer la interfaz a la pantalla de login/registro
+        window.usuarioActual = null;
+        window.usuarioAuthId = null;
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById('login').classList.add('active');
+        document.getElementById('main-menu').style.display = 'none';
+        document.getElementById('registro').style.display = 'block';
+        document.getElementById('login').style.display = 'block';
+
+        if (document.getElementById('registro').classList.contains('active')) {
+            document.getElementById('login').style.display = 'none';
+        } else {
+            document.getElementById('registro').style.display = 'none';
+        }
       }).catch((error) => {
         console.error("Error al cerrar sesión:", error);
       });
     }
 
-    // ** FUNCIONES DE PUBLICACIONES Y COMENTARIOS **
+    // ** FUNCIONES DE PUBLICACIONES Y COMENTARIOS (usan las variables y funciones globales de Firebase) **
     function crearElementoComentario(texto, autor, likes = 0, dislikes = 0) {
       const div = document.createElement('div');
       div.className = 'comment';
@@ -460,7 +488,7 @@
     }
 
     async function publicar() {
-      if (!usuarioActual) {
+      if (!window.usuarioActual) {
         alert("Debes iniciar sesión para publicar.");
         return;
       }
@@ -477,9 +505,9 @@
       }
 
       try {
-        await addDoc(collection(db, "publicaciones"), {
-          autor: usuarioActual,
-          autorUid: usuarioAuthId,
+        await window.addDoc(window.collection(db, "publicaciones"), {
+          autor: window.usuarioActual,
+          autorUid: window.usuarioAuthId,
           partido: partido,
           apuesta: apuesta,
           hora: hora,
@@ -503,7 +531,7 @@
     }
 
     async function comentar(btn) {
-      if (!usuarioActual) {
+      if (!window.usuarioActual) {
         alert("Debes iniciar sesión para comentar.");
         return;
       }
@@ -521,9 +549,9 @@
       }
 
       try {
-        await addDoc(collection(db, "publicaciones", postId, "comentarios"), {
-          autor: usuarioActual,
-          autorUid: usuarioAuthId,
+        await window.addDoc(window.collection(db, "publicaciones", postId, "comentarios"), {
+          autor: window.usuarioActual,
+          autorUid: window.usuarioAuthId,
           texto: texto,
           likes: 0,
           dislikes: 0,
@@ -537,7 +565,7 @@
     }
 
     async function darLikeDislike(btn, tipo) {
-      if (!usuarioActual) {
+      if (!window.usuarioActual) {
         alert("Debes iniciar sesión para dar 'Me gusta' o 'No me gusta'.");
         return;
       }
@@ -562,8 +590,8 @@
         return;
       }
 
-      const key = `${usuarioAuthId}_${elementoId}`;
-      const estadoPrevio = likes.get(key);
+      const key = `${window.usuarioAuthId}_${elementoId}`;
+      const estadoPrevio = window.likes.get(key);
 
       let currentLikes = parseInt(elemento.querySelector('[onclick*="darLikeDislike(this, \'like\')] span').textContent);
       let currentDislikes = parseInt(elemento.querySelector('[onclick*="darLikeDislike(this, \'dislike\')] span').textContent);
@@ -572,7 +600,7 @@
       let newDislikes = currentDislikes;
 
       if (estadoPrevio === tipo) {
-          likes.delete(key);
+          window.likes.delete(key);
           if (tipo === 'like') {
               newLikes--;
           } else {
@@ -584,7 +612,7 @@
           } else if (estadoPrevio === 'dislike') {
               newDislikes--;
           }
-          likes.set(key, tipo);
+          window.likes.set(key, tipo);
           if (tipo === 'like') {
               newLikes++;
           } else {
@@ -593,7 +621,7 @@
       }
 
       try {
-          await updateDoc(doc(db, docRefPath), {
+          await window.updateDoc(window.doc(db, docRefPath), {
               likes: newLikes,
               dislikes: newDislikes
           });
@@ -601,15 +629,15 @@
           console.error("Error al actualizar likes/dislikes en Firestore:", e);
           alert("Hubo un error al procesar tu like/dislike. Inténtalo de nuevo.");
           if (estadoPrevio) {
-              likes.set(key, estadoPrevio);
+              window.likes.set(key, estadoPrevio);
           } else {
-              likes.delete(key);
+              window.likes.delete(key);
           }
       }
     }
 
     async function borrar(btn) {
-      if (!usuarioActual) {
+      if (!window.usuarioActual) {
         alert("Debes iniciar sesión para borrar.");
         return;
       }
@@ -619,14 +647,14 @@
 
       const autorUidPublicacion = post.dataset.autorUid;
 
-      if (autorUidPublicacion !== usuarioAuthId) {
+      if (autorUidPublicacion !== window.usuarioAuthId) {
         alert("Solo puedes borrar tus propias publicaciones.");
         return;
       }
 
       if (confirm("¿Estás seguro de que quieres borrar esta publicación y todos sus comentarios?")) {
         try {
-          await deleteDoc(doc(db, "publicaciones", postId));
+          await window.deleteDoc(window.doc(db, "publicaciones", postId));
           console.log("Publicación borrada con éxito de Firestore.");
         } catch (e) {
           console.error("Error al borrar publicación de Firestore:", e);
@@ -641,9 +669,9 @@
       const publicacionesDiv = document.getElementById('publicaciones');
       publicacionesDiv.innerHTML = '';
 
-      const q = query(collection(db, "publicaciones"), orderBy("timestamp", "desc"));
+      const q = window.query(window.collection(db, "publicaciones"), window.orderBy("timestamp", "desc"));
 
-      onSnapshot(q, (snapshot) => {
+      window.onSnapshot(q, (snapshot) => {
         publicacionesDiv.innerHTML = '';
         snapshot.forEach((doc) => {
           const data = doc.data();
@@ -667,7 +695,7 @@
                   <div class='main-comments hidden'></div>
               </div>
               <div class='edit-delete'>
-                  ${usuarioAuthId === data.autorUid ? `<button onclick='borrar(this)'>🗑️</button>` : ''}
+                  ${window.usuarioAuthId === data.autorUid ? `<button onclick='borrar(this)'>🗑️</button>` : ''}
               </div>
           `;
           publicacionesDiv.appendChild(div);
@@ -680,9 +708,9 @@
     }
 
     function cargarComentarios(postId, commentsContainer, toggleButton) {
-      const qComments = query(collection(db, "publicaciones", postId, "comentarios"), orderBy("timestamp", "asc"));
+      const qComments = window.query(window.collection(db, "publicaciones", postId, "comentarios"), window.orderBy("timestamp", "asc"));
 
-      onSnapshot(qComments, (snapshot) => {
+      window.onSnapshot(qComments, (snapshot) => {
         commentsContainer.innerHTML = '';
         snapshot.forEach((doc) => {
           const data = doc.data();
@@ -733,6 +761,28 @@
         btn.textContent = `Ocultar respuestas (${nestedCommentsDiv.children.length})`;
       }
     }
+
+    // Adjuntar las funciones que necesitan ser accesibles globalmente al objeto window
+    // Esto es necesario porque estas funciones son llamadas desde el HTML (onclick)
+    window.toggleModo = toggleModo;
+    window.mostrarSeccion = mostrarSeccion;
+    window.mostrarLoginScreen = mostrarLoginScreen;
+    window.mostrarRegistroScreen = mostrarRegistroScreen;
+    window.verPerfil = verPerfil;
+    window.mostrarNotificaciones = mostrarNotificaciones;
+    window.buscar = buscar;
+    window.guardarDescripcion = guardarDescripcion;
+    window.toggleSeguir = toggleSeguir;
+    window.registrarse = registrarse;
+    window.iniciarSesion = iniciarSesion;
+    window.cerrarSesion = cerrarSesion;
+    window.publicar = publicar;
+    window.comentar = comentar;
+    window.darLikeDislike = darLikeDislike;
+    window.borrar = borrar;
+    window.toggleComentariosPrincipales = toggleComentariosPrincipales;
+    window.toggleRespuestas = toggleRespuestas;
+
   </script>
 </head>
 
