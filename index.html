@@ -887,7 +887,7 @@
                         <strong onclick="verPerfil('${data.autor}')" style="cursor:pointer;color:var(--accent-color)">${data.autor}</strong>: ${data.partido} - ${data.apuesta}<br>${data.fecha} ${data.hora}<br>${data.comentario}
                         <div class='like-dislike'>
                             <button onclick="darLikeDislike(this, 'like')">👍 <span>${data.likes || 0}</span></button>
-                            <button onclick="darLikeDislike(this, 'dislike')">👎 <span>${data.dislike  s || 0}</span></button>
+                            <button onclick="darLikeDislike(this, 'dislike')">👎 <span>${data.dislikes || 0}</span></button>
                         </div>
                         <div class='comment-section'>
                             <textarea placeholder='Escribe un comentario...'></textarea>
