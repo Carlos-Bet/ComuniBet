@@ -237,7 +237,10 @@
         if (!userName) return null;
         const q = query(collection(db, "usuarios"), where("userName", "==", userName));
         const querySnapshot = await getDocs(q);
-        return !querySnapshot.empty;
+        if (!querySnapshot.empty) { // Asegúrate de devolver el UID si se encuentra
+            return querySnapshot.docs[0].data().uid;
+        }
+        return null;
     }
     window.getUidByUserName = getUidByUserName;
 
@@ -265,7 +268,7 @@
         }
         return { userName: '', descripcion: '', seguidores: [], siguiendo: [] };
     }
-    window.cargarDatosPerfilDeFirestore = cargarDatosPerfilDeFirestore;
+    window.cargarDatosPerfilDeFirestore = cargarDatosDatosPerfilDeFirestore;
 
     // ** Funciones de UI y Lógica (usan las variables globales) **
     function toggleModo() {
@@ -492,7 +495,7 @@
         if (document.getElementById('registro').classList.contains('active')) {
             document.getElementById('login').style.display = 'none';
         } else {
-            document.getElementById('registro').style.display = 'none';
+            document.getElementById('login').style.display = 'none';
         }
       }
     });
@@ -523,8 +526,12 @@
             console.log("DEBUG: user.email:", user.email);
             console.log("DEBUG: window.usuarioAuthId (al momento de la autenticación):", window.usuarioAuthId); // Esto aún puede ser null aquí, se actualiza en onAuthStateChanged
             
+            // *** Añadir un pequeño retraso aquí para depuración ***
+            // Esto permite que el estado de autenticación de Firebase se asiente completamente.
+            await new Promise(resolve => setTimeout(resolve, 500)); // Espera 500ms
+
             // Al crear el usuario, inicializamos la descripción, seguidores y siguiendo
-            await addDoc(collection(db, "usuarios"), {
+            await addDoc(collection(db, "usuarios"), { // Esta es la línea 562 (aproximadamente)
                 uid: user.uid,
                 userName: username,
                 email: email,
