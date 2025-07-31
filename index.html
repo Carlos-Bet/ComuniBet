@@ -6,8 +6,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Comunibet</title>
 
+  <!-- ********************************************** -->
+  <!-- ** CÓDIGO DE ADSENSE IMPLEMENTADO AQUÍ ** -->
+  <!-- ********************************************** -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-TU_ID_DE_ADSENSE_AQUI"
        crossorigin="anonymous"></script>
+  <!-- ********************************************** -->
+  <!-- ** FIN DEL CÓDIGO DE ADSENSE ** -->
+  <!-- ********************************************** -->
+
   <style>
     :root {
       --bg-color: #121212;
@@ -187,6 +194,9 @@
     }
   </style>
 
+  <!-- ********************************************************** -->
+  <!-- ** INICIO DEL CÓDIGO DE FIREBASE - Con 'defer' añadido ** -->
+  <!-- ********************************************************** -->
   <script type="module" defer>
     // Import the functions you need from the SDKs you need
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
@@ -195,9 +205,9 @@
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
     // import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
 
-    // Your web app's Firebase configuration
+    // Your web app's Firebase configuration (ESTA ES LA CONFIGURACIÓN QUE ME PROPORCIONASTE)
     const firebaseConfig = {
-      apiKey: "TU_API_KEY_AQUI", // Asegúrate de que este sea tu API Key correcto
+      apiKey: "AIzaSyAs19oiYivfPYSCl_-xcOFeBQMziZSeBn0",
       authDomain: "comunibetstudio.firebaseapp.com",
       projectId: "comunibetstudio",
       storageBucket: "comunibetstudio.firebasestorage.app",
@@ -236,7 +246,7 @@
     window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
     window.signInWithEmailAndPassword = signInWithEmailAndPassword;
     window.signOut = signOut;
-    window.onAuthStateChangedListener = onAuthStateChanged;
+    window.onAuthStateChangedListener = onAuthStateChanged; // Exponemos onAuthStateChanged con este nombre
 
     // Función auxiliar para obtener el nombre de usuario por UID
     window.getUserNameByUid = async function(uid) {
@@ -285,6 +295,11 @@
     };
 
   </script>
+  <!-- ********************************************************** -->
+  <!-- ** FIN DEL CÓDIGO DE FIREBASE ** -->
+  <!-- ********************************************************** -->
+
+  <!-- Tu script principal con la lógica de la UI y las funciones de Firebase -->
   <script defer>
     // ** Funciones de UI y Lógica (usan las variables globales) **
     function toggleModo() {
@@ -340,10 +355,12 @@
         // Es nuestro propio perfil
         btnSeguir.style.display = 'none'; // No se puede seguir a uno mismo
         descripcionInput.readOnly = false; // Podemos editar nuestra descripción
+        document.getElementById('guardarDescripcionBtn').style.display = 'inline-block'; // Mostrar botón Guardar
       } else {
         // Es el perfil de otra persona
         btnSeguir.style.display = 'inline-block'; // Mostrar botón de seguir
         descripcionInput.readOnly = true; // No podemos editar su descripción
+        document.getElementById('guardarDescripcionBtn').style.display = 'none'; // Ocultar botón Guardar
 
         // Verificar si ya seguimos a esta persona
         if (window.usuarioAuthId && datosPerfil.seguidores.includes(window.usuarioAuthId)) {
@@ -471,6 +488,7 @@
           document.getElementById('contadorSeguidores').textContent = myProfileData.seguidores.length;
           document.getElementById('btnSeguir').style.display = 'none'; // No mostrar seguir en tu propio perfil
           document.getElementById('descripcionPerfil').readOnly = false; // Tu descripción es editable
+          document.getElementById('guardarDescripcionBtn').style.display = 'inline-block'; // Mostrar botón Guardar
         } else {
           console.warn("onAuthStateChanged: Usuario autenticado pero nombre de usuario NO ENCONTRADO en Firestore.");
           alert("Error: Nombre de usuario no encontrado en la base de datos. Por favor, asegúrate de haberte registrado correctamente o contacta al soporte.");
@@ -530,7 +548,7 @@
             document.getElementById('nuevoEmail').value = '';
             document.getElementById('nuevaContrasena').value = '';
             document.getElementById('nuevoNombreUsuario').value = '';
-            mostrarLoginScreen();
+            mostrarLoginScreen(); // Muestra la pantalla de login después del registro
         } catch (error) {
             const errorMessage = error.message;
             console.error("Error de registro:", error);
@@ -893,12 +911,12 @@
     window.mostrarSeccion = mostrarSeccion;
     window.mostrarLoginScreen = mostrarLoginScreen;
     window.mostrarRegistroScreen = mostrarRegistroScreen;
-    window.verPerfil = verPerfil; // Actualizada
+    window.verPerfil = verPerfil;
     window.mostrarNotificaciones = mostrarNotificaciones;
     window.buscar = buscar;
-    window.guardarDescripcion = guardarDescripcion; // Actualizada
-    window.toggleSeguir = toggleSeguir; // Actualizada
-    window.registrarse = registrarse; // Actualizada para inicializar campos
+    window.guardarDescripcion = guardarDescripcion;
+    window.toggleSeguir = toggleSeguir;
+    window.registrarse = registrarse;
     window.iniciarSesion = iniciarSesion;
     window.cerrarSesion = cerrarSesion;
     window.publicar = publicar;
@@ -915,12 +933,14 @@
   <header id="site-title">Comunibet <button onclick="toggleModo()">🌗</button></header>
   <nav id="main-menu" style="display: none;">
     <button onclick="mostrarSeccion('foro')">Foro</button>
-    <button onclick="verPerfil(window.usuarioActual)">Mi Perfil</button> <button onclick="mostrarSeccion('contacto')">Contacto</button>
+    <button onclick="verPerfil(window.usuarioActual)">Mi Perfil</button>
+    <button onclick="mostrarSeccion('contacto')">Contacto</button>
     <button onclick="mostrarSeccion('comunidad')">Comunidad</button>
     <button onclick="cerrarSesion()">Cerrar sesión</button>
     <div class="notification-icon" onclick="mostrarNotificaciones()">🔔<span id="noti-count">0</span></div>
   </nav>
 
+  <!-- Sección de Registro -->
   <div id="registro" class="section active">
     <div class="form-section">
       <h2>Regístrate</h2>
@@ -932,6 +952,7 @@
     </div>
   </div>
 
+  <!-- Sección de Login -->
   <div id="login" class="section">
     <div class="form-section">
       <h2>Iniciar Sesión</h2>
@@ -960,7 +981,7 @@
     <h2 id="nombrePerfil">Mi Perfil</h2>
     <p>Descripción:</p>
     <textarea id="descripcionPerfil" placeholder="Tu descripción..."></textarea>
-    <button onclick="guardarDescripcion()">Guardar Descripción</button>
+    <button onclick="guardarDescripcion()" id="guardarDescripcionBtn">Guardar Descripción</button>
     <p>Seguidores: <span id="contadorSeguidores">0</span></p>
     <button onclick="toggleSeguir()" id="btnSeguir">Seguir</button>
   </div>
