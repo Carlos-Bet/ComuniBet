@@ -199,7 +199,7 @@
 
     // Your web app's Firebase configuration (ESTA ES LA CONFIGURACIÓN QUE ME PROPORCIONASTE)
     const firebaseConfig = {
-      apiKey: "AIzaSyAs19oiYivfPYSCl_-xcOFeBQMziZSeBn0", // <-- ¡TU API KEY INTEGRADA AQUÍ!
+      apiKey: "AIzaSyAs19oiYivfPYSCl_-xcOFeBQMziZSeBn0", // TU API KEY INTEGRADA AQUÍ
       authDomain: "comunibetstudio.firebaseapp.com",
       projectId: "comunibetstudio",
       storageBucket: "comunibetstudio.firebasestorage.app",
@@ -521,7 +521,7 @@
             console.log("DEBUG: Usuario autenticado exitosamente en Firebase Auth:");
             console.log("DEBUG: user.uid:", user.uid);
             console.log("DEBUG: user.email:", user.email);
-            console.log("DEBUG: window.usuarioAuthId (después de auth):", window.usuarioAuthId); // Esto debería ser null aquí, se actualiza en onAuthStateChanged
+            console.log("DEBUG: window.usuarioAuthId (al momento de la autenticación):", window.usuarioAuthId); // Esto aún puede ser null aquí, se actualiza en onAuthStateChanged
             
             // Al crear el usuario, inicializamos la descripción, seguidores y siguiendo
             await addDoc(collection(db, "usuarios"), {
@@ -552,6 +552,8 @@
                 alert("La contraseña es demasiado débil (debe tener al menos 6 caracteres).");
             } else if (error.code === 'auth/operation-not-allowed') {
                 alert("El registro con correo/contraseña no está habilitado en tu proyecto Firebase. Por favor, contacta al administrador.");
+            } else if (error.code === 'auth/api-key-not-valid') { // Añadimos este caso específico
+                alert("Error de configuración de Firebase: La clave API no es válida o falta. Por favor, verifica tu configuración de Firebase.");
             }
             else {
                 alert(`Error al registrar: ${errorMessage}`);
@@ -587,7 +589,10 @@
               alert("Email o contraseña incorrectos.");
           } else if (error.code === 'auth/too-many-requests') {
               alert("Demasiados intentos fallidos. Inténtalo de nuevo más tarde.");
-          } else {
+          } else if (error.code === 'auth/api-key-not-valid') { // Añadimos este caso específico
+                alert("Error de configuración de Firebase: La clave API no es válida o falta. Por favor, verifica tu configuración de Firebase.");
+          }
+          else {
               alert(`Error al iniciar sesión: ${errorMessage}`);
           }
       }
