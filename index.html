@@ -514,11 +514,15 @@
         }
 
         try {
+            console.log("DEBUG: Intentando crear usuario con email:", email);
             const userCredential = await createUserWithEmailAndPassword(auth, email, contrasena);
             const user = userCredential.user;
-            console.log("Usuario autenticado UID en registro:", user.uid); // DEBUG: Añadido para verificar UID
-            console.log("Email de usuario en registro:", user.email); // DEBUG: Añadido para verificar email
 
+            console.log("DEBUG: Usuario autenticado exitosamente en Firebase Auth:");
+            console.log("DEBUG: user.uid:", user.uid);
+            console.log("DEBUG: user.email:", user.email);
+            console.log("DEBUG: window.usuarioAuthId (después de auth):", window.usuarioAuthId); // Esto debería ser null aquí, se actualiza en onAuthStateChanged
+            
             // Al crear el usuario, inicializamos la descripción, seguidores y siguiendo
             await addDoc(collection(db, "usuarios"), {
                 uid: user.uid,
@@ -529,6 +533,8 @@
                 seguidores: [], // Nuevo array vacío para seguidores
                 siguiendo: [] // Nuevo array vacío para siguiendo
             });
+            console.log("DEBUG: Documento de usuario añadido a Firestore exitosamente.");
+
 
             alert("Cuenta creada. Por favor, inicia sesión.");
             document.getElementById('nuevoEmail').value = '';
@@ -537,7 +543,7 @@
             mostrarLoginScreen(); // Muestra la pantalla de login después del registro
         } catch (error) {
             const errorMessage = error.message;
-            console.error("Error de registro:", error);
+            console.error("Error de registro (Firebase Auth o Firestore):", error);
             if (error.code === 'auth/email-already-in-use') {
                 alert("El correo electrónico ya está en uso. Por favor, usa otro o inicia sesión.");
             } else if (error.code === 'auth/invalid-email') {
