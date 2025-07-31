@@ -6,9 +6,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Comunibet</title>
 
+  <!-- ********************************************** -->
+  <!-- ** FAVICON (LOGO EN LA PESTAÑA DEL NAVEGADOR) ** -->
+  <!-- Asegúrate que 'Logo moderno de ComuniBet.jpg' esté en la raíz de tu hosting -->
   <link rel="icon" href="/Logo moderno de ComuniBet.jpg" type="image/jpeg">
+  <!-- ********************************************** -->
+
+  <!-- ********************************************** -->
+  <!-- ** CÓDIGO DE ADSENSE IMPLEMENTADO AQUÍ ** -->
+  <!-- Reemplaza 'ca-pub-TU_ID_DE_ADSENSE_AQUI' con tu ID real de AdSense -->
+  <!-- ********************************************** -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-TU_ID_DE_ADSENSE_AQUI"
        crossorigin="anonymous"></script>
+  <!-- ********************************************** -->
+  <!-- ** FIN DEL CÓDIGO DE ADSENSE ** -->
+  <!-- ********************************************** -->
+
   <style>
     :root {
       --bg-color: #121212;
@@ -189,13 +202,19 @@
     }
   </style>
 
+  <!--
+    *** ¡¡¡IMPORTANTE!!! ***
+    El atributo 'type="module"' es CRUCIAL para que las importaciones de Firebase funcionen.
+    Si falta, las funciones de Firebase (como onAuthStateChanged, createUserWithEmailAndPassword, etc.)
+    no estarán definidas, causando errores de "ReferenceError".
+  -->
   <script type="module" defer>
     // Import the functions you need from the SDKs you need
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-    // Importar arrayUnion y arrayRemove para la gestión de seguidores
-    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc, getDocs, where, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
-    // import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
+    // *** TODAS LAS IMPORTACIONES DE FIREBASE SE ACTUALIZAN A LA VERSIÓN 12.0.0 ***
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc, getDocs, where, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js"; // Descomentado si quieres usar Analytics
 
     // Your web app's Firebase configuration (ESTA ES LA CONFIGURACIÓN QUE ME PROPORCIONASTE)
     const firebaseConfig = {
@@ -212,7 +231,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
-    // const analytics = getAnalytics(app); // Descomentar si usas Analytics
+    const analytics = getAnalytics(app); // Inicializa Analytics
 
     // ** Variables globales para el estado del usuario y el perfil visitado **
     window.usuarioActual = null; // Nombre de usuario del que está logueado
@@ -466,7 +485,7 @@
           document.getElementById('login').style.display = 'none';
           
           // Cargar los datos del perfil del usuario logueado para "Mi Perfil"
-          const myProfileData = await cargarDatosPerfilDeFirestore(user.uid); // ¡CORREGIDO AQUÍ!
+          const myProfileData = await cargarDatosPerfilDeFirestore(user.uid);
           document.getElementById('nombrePerfil').textContent = myProfileData.userName; // Asegurar que el nombre en el perfil sea el correcto
           document.getElementById('descripcionPerfil').value = myProfileData.descripcion;
           document.getElementById('contadorSeguidores').textContent = myProfileData.seguidores.length;
@@ -948,6 +967,7 @@
     <div class="notification-icon" onclick="mostrarNotificaciones()">🔔<span id="noti-count">0</span></div>
   </nav>
 
+  <!-- Sección de Registro -->
   <div id="registro" class="section active">
     <div class="form-section">
       <h2>Regístrate</h2>
@@ -959,6 +979,7 @@
     </div>
   </div>
 
+  <!-- Sección de Login -->
   <div id="login" class="section">
     <div class="form-section">
       <h2>Iniciar Sesión</h2>
@@ -992,24 +1013,29 @@
     <button onclick="toggleSeguir()" id="btnSeguir">Seguir</button>
   </div>
 
+  <!-- NUEVA SECCIÓN: ¿Qué es Comunibet? -->
   <div id="que-es-comunibet" class="section">
     <h2>¿Qué es Comunibet?</h2>
     <p>Comunibet es tu foro interactivo dedicado a las apuestas deportivas. Aquí, la comunidad se une para compartir y explorar el emocionante mundo de los pronósticos.</p>
     <p>Todos los usuarios pueden dejar libremente sus apuestas, con sus análisis y comentarios, para que otros las vean. ¡También puedes explorar las apuestas compartidas por otros miembros de la comunidad!</p>
     <p>Es el lugar perfecto para encontrar nuevas ideas, debatir estrategias y mejorar tus pronósticos junto a otros entusiastas.</p>
   </div>
+  <!-- FIN NUEVA SECCIÓN -->
+
   <div id="contacto" class="section">
     <h2>Contacto</h2>
     <p><img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" width="20"> Instagram: carlos.m1k</p>
     <p><img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" width="20"> WhatsApp: 3203297982</p>
     <p>¡Gracias por tu apoyo a Comunibet!</p>
-    </div>
+    <!-- EL LOGO DE COMUNIBET AQUÍ HA SIDO REMOVIDO COMO PEDISTE -->
+  </div>
 
   <div id="comunidad" class="section">
     <h2>Comunidad</h2>
     <div id="ranking"></div>
   </div>
 
+  <!-- Sección de Donaciones (sin logo de Nequi directo aquí) -->
   <div id="donaciones" class="section">
     <h2>Donaciones</h2>
     <p>¡Ayúdanos a mantener y mejorar la plataforma!</p>
@@ -1017,6 +1043,8 @@
     <p>Número de Nequi: <strong>3203297982</strong></p>
     <p>¡Cada contribución, grande o pequeña, es muy apreciada!</p>
   </div>
-  </body>
+  <!-- Fin de Sección de Donaciones -->
+
+</body>
 
 </html>
