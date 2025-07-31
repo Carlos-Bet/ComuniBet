@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Comunibet</title>
 
+  <link rel="icon" href="/Logo moderno de ComuniBet.jpg" type="image/jpeg">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-TU_ID_DE_ADSENSE_AQUI"
        crossorigin="anonymous"></script>
   <style>
@@ -180,13 +181,25 @@
       font-size: 0.7rem;
     }
 
-    #donaciones img {
-        max-width: 150px; /* Tamaño de la imagen de Nequi */
+    /* REMOVIDO: #donaciones img {} */
+
+    /* NUEVO: Estilo para el logo de Comunibet en la página */
+    #comunibet-logo-footer {
+        max-width: 200px; /* Ajusta el tamaño según sea necesario */
         height: auto;
-        display: block; /* Para centrarla con margin: auto */
-        margin: 20px auto;
-        border-radius: 10px;
+        display: block;
+        margin: 20px auto; /* Centrar la imagen */
+        /* Intento para quitar fondo (ajusta o elimina si no funciona bien) */
+        /* mix-blend-mode: screen; /* Útil para logos blancos sobre fondos oscuros */
+        /* O alternativamente: */
+        filter: brightness(0) invert(1); /* Si el logo es oscuro y el fondo es claro, o viceversa, y quieres invertir colores */
+        /* Para quitar un fondo sólido y conocido, podrías usar: */
+        /* Si tu logo tiene un fondo blanco y quieres que sea transparente: */
+        /* filter: contrast(0) brightness(1) invert(1); */
+        /* Necesitas probar cuál filter se adapta mejor o si requiere edición previa. */
+        /* Si no funciona con filter, la mejor opción es una imagen con fondo transparente (PNG). */
     }
+
 
     @media (max-width: 600px) {
       nav {
@@ -930,7 +943,8 @@
     <button onclick="verPerfil(window.usuarioActual)">Mi Perfil</button>
     <button onclick="mostrarSeccion('contacto')">Contacto</button>
     <button onclick="mostrarSeccion('comunidad')">Comunidad</button>
-    <button onclick="mostrarSeccion('donaciones')">Donaciones</button> <button onclick="cerrarSesion()">Cerrar sesión</button>
+    <button onclick="mostrarSeccion('donaciones')">Donaciones</button>
+    <button onclick="cerrarSesion()">Cerrar sesión</button>
     <div class="notification-icon" onclick="mostrarNotificaciones()">🔔<span id="noti-count">0</span></div>
   </nav>
 
@@ -982,6 +996,8 @@
     <h2>Contacto</h2>
     <p><img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" width="20"> Instagram: carlos.m1k</p>
     <p><img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" width="20"> WhatsApp: 3203297982</p>
+    <p>¡Gracias por tu apoyo a Comunibet!</p>
+    <img id="comunibet-logo-footer" src="/Logo moderno de ComuniBet.jpg" alt="Logo de Comunibet">
   </div>
 
   <div id="comunidad" class="section">
@@ -993,7 +1009,6 @@
     <h2>Donaciones</h2>
     <p>¡Ayúdanos a mantener y mejorar la plataforma!</p>
     <p>Puedes apoyar a través de Nequi:</p>
-    <img src="data:image/png;base64,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" alt="Logo de Nequi">
     <p>Número de Nequi: <strong>3203297982</strong></p>
     <p>¡Cada contribución, grande o pequeña, es muy apreciada!</p>
   </div>
