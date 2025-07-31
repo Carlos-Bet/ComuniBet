@@ -218,11 +218,6 @@
     window.perfilVisitadoUid = null; // UID del perfil que se está viendo actualmente
     window.likes = new Map();
 
-    // ** Exponemos las funciones de Firebase SDK directamente si es necesario o las usamos internamente **
-    // Para simplificar, las funciones de Firebase SDK como collection, addDoc, etc., no necesitan ser
-    // puestas en 'window' si solo se usan dentro de este script.
-    // Solo las funciones que se llaman desde el HTML (como onClick) necesitan ser globales.
-
     // Función auxiliar para obtener el nombre de usuario por UID
     async function getUserNameByUid(uid) {
         if (!uid) return null;
@@ -233,7 +228,7 @@
         }
         return null;
     }
-    window.getUserNameByUid = getUserNameByUid; // Exponemos para que otras funciones globales la usen
+    window.getUserNameByUid = getUserNameByUid;
 
     // Función auxiliar para obtener el UID por nombre de usuario
     async function getUidByUserName(userName) {
@@ -245,7 +240,7 @@
         }
         return null;
     }
-    window.getUidByUserName = getUidByUserName; // Exponemos para que otras funciones globales la usen
+    window.getUidByUserName = getUidByUserName;
 
     // Función auxiliar para verificar si un nombre de usuario existe
     async function checkIfUserNameExists(username) {
@@ -253,7 +248,7 @@
         const querySnapshot = await getDocs(q);
         return !querySnapshot.empty;
     }
-    window.checkIfUserNameExists = checkIfUserNameExists; // Exponemos
+    window.checkIfUserNameExists = checkIfUserNameExists;
 
     // Nueva función para cargar los datos del perfil de un UID específico
     async function cargarDatosPerfilDeFirestore(uid) {
@@ -271,7 +266,7 @@
         }
         return { userName: '', descripcion: '', seguidores: [], siguiendo: [] };
     }
-    window.cargarDatosPerfilDeFirestore = cargarDatosPerfilDeFirestore; // Exponemos
+    window.cargarDatosPerfilDeFirestore = cargarDatosPerfilDeFirestore;
 
     // ** Funciones de UI y Lógica (usan las variables globales) **
     function toggleModo() {
@@ -302,10 +297,9 @@
       document.getElementById('registro').style.display = 'block';
     }
 
-    // Modificamos verPerfil para cargar el perfil correcto
+    // Modificamos verPerfil para cargar el perfil correcto y controlar la edición
     async function verPerfil(nombre) {
-      // Buscar el UID del nombre de usuario que se quiere ver
-      const uidDelPerfil = await getUidByUserName(nombre); // Uso directo, no window.getUidByUserName
+      const uidDelPerfil = await getUidByUserName(nombre);
 
       if (!uidDelPerfil) {
         alert(`No se encontró el perfil de ${nombre}.`);
@@ -314,7 +308,7 @@
 
       window.perfilVisitadoUid = uidDelPerfil; // Establecer el UID del perfil que se está viendo
 
-      const datosPerfil = await cargarDatosPerfilDeFirestore(uidDelPerfil); // Uso directo
+      const datosPerfil = await cargarDatosPerfilDeFirestore(uidDelPerfil);
 
       document.getElementById('nombrePerfil').textContent = datosPerfil.userName;
       document.getElementById('descripcionPerfil').value = datosPerfil.descripcion;
@@ -322,17 +316,19 @@
 
       const btnSeguir = document.getElementById('btnSeguir');
       const descripcionInput = document.getElementById('descripcionPerfil');
+      const guardarDescripcionBtn = document.getElementById('guardarDescripcionBtn');
+
 
       if (uidDelPerfil === window.usuarioAuthId) {
         // Es nuestro propio perfil
         btnSeguir.style.display = 'none'; // No se puede seguir a uno mismo
         descripcionInput.readOnly = false; // Podemos editar nuestra descripción
-        document.getElementById('guardarDescripcionBtn').style.display = 'inline-block'; // Mostrar botón Guardar
+        guardarDescripcionBtn.style.display = 'inline-block'; // Mostrar botón Guardar
       } else {
         // Es el perfil de otra persona
         btnSeguir.style.display = 'inline-block'; // Mostrar botón de seguir
-        descripcionInput.readOnly = true; // No podemos editar su descripción
-        document.getElementById('guardarDescripcionBtn').style.display = 'none'; // Ocultar botón Guardar
+        descripcionInput.readOnly = true; // NO podemos editar su descripción (solo lectura)
+        guardarDescripcionBtn.style.display = 'none'; // Ocultar botón Guardar para perfiles ajenos
 
         // Verificar si ya seguimos a esta persona
         if (window.usuarioAuthId && datosPerfil.seguidores.includes(window.usuarioAuthId)) {
@@ -396,12 +392,24 @@
       const contadorSeguidores = document.getElementById("contadorSeguidores");
 
       try {
+        // Obtenemos la referencia al documento del usuario actual
         const miUsuarioQuery = query(collection(db, "usuarios"), where("uid", "==", window.usuarioAuthId));
         const miUsuarioSnapshot = await getDocs(miUsuarioQuery);
+        if (miUsuarioSnapshot.empty) {
+            console.error("Documento de usuario actual no encontrado en Firestore.");
+            alert("Error: Tu perfil no se encontró para actualizar el seguimiento.");
+            return;
+        }
         const miUsuarioDocRef = miUsuarioSnapshot.docs[0].ref;
 
+        // Obtenemos la referencia al documento del usuario a seguir/dejar de seguir
         const otroUsuarioQuery = query(collection(db, "usuarios"), where("uid", "==", window.perfilVisitadoUid));
         const otroUsuarioSnapshot = await getDocs(otroUsuarioQuery);
+        if (otroUsuarioSnapshot.empty) {
+            console.error("Documento del otro usuario no encontrado en Firestore.");
+            alert("Error: El perfil que intentas seguir no se encontró.");
+            return;
+        }
         const otroUsuarioDocRef = otroUsuarioSnapshot.docs[0].ref;
 
         if (btn.textContent === "Seguir") {
@@ -427,7 +435,8 @@
         }
       } catch (e) {
         console.error("Error al seguir/dejar de seguir:", e);
-        alert("Hubo un error al actualizar la relación de seguimiento.");
+        // Aquí puedes dar un mensaje más específico si el error.code es relevante
+        alert("Hubo un error al actualizar la relación de seguimiento. Revisa la consola para más detalles.");
       }
     }
 
@@ -435,11 +444,11 @@
     // ** LÓGICA DE AUTENTICACIÓN Y ESTADO DE USUARIO **
 
     // Escucha cambios en el estado de autenticación de Firebase
-    onAuthStateChanged(auth, async (user) => { // USO DIRECTO de onAuthStateChanged
+    onAuthStateChanged(auth, async (user) => {
       if (user) {
         console.log("onAuthStateChanged: Usuario autenticado. UID:", user.uid);
         window.usuarioAuthId = user.uid; // Actualiza la variable global
-        const userName = await getUserNameByUid(user.uid); // Uso directo de la función
+        const userName = await getUserNameByUid(user.uid);
 
         if (userName) {
           console.log("onAuthStateChanged: Nombre de usuario encontrado:", userName);
@@ -452,16 +461,19 @@
           document.getElementById('main-menu').style.display = 'flex';
           document.getElementById('registro').style.display = 'none';
           document.getElementById('login').style.display = 'none';
-          document.getElementById('nombrePerfil').textContent = userName;
-          cargarPublicaciones(); // Carga las publicaciones
           
           // Cargar los datos del perfil del usuario logueado para "Mi Perfil"
-          const myProfileData = await cargarDatosPerfilDeFirestore(user.uid); // Uso directo
+          const myProfileData = await cargarDatosPerfilDeFirestore(user.uid);
+          document.getElementById('nombrePerfil').textContent = myProfileData.userName; // Asegurar que el nombre en el perfil sea el correcto
           document.getElementById('descripcionPerfil').value = myProfileData.descripcion;
           document.getElementById('contadorSeguidores').textContent = myProfileData.seguidores.length;
+          
+          // Configuración específica para el propio perfil (editable)
           document.getElementById('btnSeguir').style.display = 'none'; // No mostrar seguir en tu propio perfil
           document.getElementById('descripcionPerfil').readOnly = false; // Tu descripción es editable
           document.getElementById('guardarDescripcionBtn').style.display = 'inline-block'; // Mostrar botón Guardar
+          
+          cargarPublicaciones(); // Carga las publicaciones
         } else {
           console.warn("onAuthStateChanged: Usuario autenticado pero nombre de usuario NO ENCONTRADO en Firestore.");
           alert("Error: Nombre de usuario no encontrado en la base de datos. Por favor, asegúrate de haberte registrado correctamente o contacta al soporte.");
@@ -496,7 +508,7 @@
             return;
         }
 
-        const usernameExists = await checkIfUserNameExists(username); // Uso directo
+        const usernameExists = await checkIfUserNameExists(username);
         if (usernameExists) {
             alert("El nombre de usuario '" + username + "' ya está en uso. Por favor, elige otro.");
             return;
@@ -507,7 +519,7 @@
             const user = userCredential.user;
 
             // Al crear el usuario, inicializamos la descripción, seguidores y siguiendo
-            await addDoc(collection(db, "usuarios"), { // Uso directo
+            await addDoc(collection(db, "usuarios"), {
                 uid: user.uid,
                 userName: username,
                 email: email,
@@ -898,8 +910,7 @@
     window.borrar = borrar;
     window.toggleComentariosPrincipales = toggleComentariosPrincipales;
     window.toggleRespuestas = toggleRespuestas;
-    window.cargarPublicaciones = cargarPublicaciones; // Asegurarse de que cargarPublicaciones sea global
-                                                     // si se le llama directamente de onAuthStateChanged
+    window.cargarPublicaciones = cargarPublicaciones; 
 
   </script>
 </head>
