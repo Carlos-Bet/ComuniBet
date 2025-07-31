@@ -334,7 +334,6 @@
             }
             return { userName: '', descripcion: '', seguidores: [], siguiendo: [] };
         }
-        // ¡¡¡CORRECCIÓN AQUÍ!!! Nombre de función correcto
         window.cargarDatosPerfilDeFirestore = cargarDatosPerfilDeFirestore;
 
         // ** Funciones de UI y Lógica (usan las variables globales) **
@@ -353,17 +352,17 @@
         }
 
         function mostrarLoginScreen() {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.getElementById('login').classList.add('active');
-            document.getElementById('registro').style.display = 'none';
-            document.getElementById('login').style.display = 'block';
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active')); // Oculta todas las secciones
+            document.getElementById('login').classList.add('active'); // Muestra la sección de login
+            document.getElementById('registro').style.display = 'none'; // Asegura que la sección de registro esté oculta
+            document.getElementById('login').style.display = 'block'; // Asegura que la sección de login sea visible
         }
 
         function mostrarRegistroScreen() {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.getElementById('registro').classList.add('active');
-            document.getElementById('login').style.display = 'none';
-            document.getElementById('registro').style.display = 'block';
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active')); // Oculta todas las secciones
+            document.getElementById('registro').classList.add('active'); // Muestra la sección de registro
+            document.getElementById('login').style.display = 'none'; // Asegura que la sección de login esté oculta
+            document.getElementById('registro').style.display = 'block'; // Asegura que la sección de registro sea visible
         }
 
         // Modificamos verPerfil para cargar el perfil correcto y controlar la edición
@@ -528,8 +527,8 @@
 
                     mostrarSeccion('foro'); // Muestra el foro por defecto al iniciar sesión
                     document.getElementById('main-menu').style.display = 'flex';
-                    document.getElementById('registro').style.display = 'none';
-                    document.getElementById('login').style.display = 'none';
+                    document.getElementById('registro').style.display = 'none'; // Asegura que registro se oculta
+                    document.getElementById('login').style.display = 'none'; // Asegura que login se oculta
 
                     // Cargar los datos del perfil del usuario logueado para "Mi Perfil"
                     const myProfileData = await cargarDatosPerfilDeFirestore(user.uid);
@@ -553,17 +552,14 @@
                 window.usuarioActual = null;
                 window.usuarioAuthId = null;
                 window.perfilVisitadoUid = null; // Reiniciar perfil visitado
-                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-                document.getElementById('login').classList.add('active'); // Por defecto, muestra el login
-                document.getElementById('main-menu').style.display = 'none';
-                document.getElementById('registro').style.display = 'block'; // Asegura que el registro sea visible si está activo
-                document.getElementById('login').style.display = 'block'; // Asegura que el login sea visible si está activo
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active')); // Oculta todas las secciones
 
-                if (document.getElementById('registro').classList.contains('active')) {
-                    document.getElementById('login').style.display = 'none';
-                } else {
-                    document.getElementById('login').style.display = 'block';
-                }
+                // Decide qué sección mostrar por defecto (login) y oculta la otra
+                document.getElementById('login').classList.add('active'); // Muestra login
+                document.getElementById('login').style.display = 'block';
+                document.getElementById('registro').style.display = 'none'; // Oculta registro
+
+                document.getElementById('main-menu').style.display = 'none';
             }
         });
 
