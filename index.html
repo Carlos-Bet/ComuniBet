@@ -180,6 +180,14 @@
       font-size: 0.7rem;
     }
 
+    #donaciones img {
+        max-width: 150px; /* Tamaño de la imagen de Nequi */
+        height: auto;
+        display: block; /* Para centrarla con margin: auto */
+        margin: 20px auto;
+        border-radius: 10px;
+    }
+
     @media (max-width: 600px) {
       nav {
         flex-direction: column;
@@ -922,7 +930,7 @@
     <button onclick="verPerfil(window.usuarioActual)">Mi Perfil</button>
     <button onclick="mostrarSeccion('contacto')">Contacto</button>
     <button onclick="mostrarSeccion('comunidad')">Comunidad</button>
-    <button onclick="cerrarSesion()">Cerrar sesión</button>
+    <button onclick="mostrarSeccion('donaciones')">Donaciones</button> <button onclick="cerrarSesion()">Cerrar sesión</button>
     <div class="notification-icon" onclick="mostrarNotificaciones()">🔔<span id="noti-count">0</span></div>
   </nav>
 
@@ -980,6 +988,15 @@
     <h2>Comunidad</h2>
     <div id="ranking"></div>
   </div>
-</body>
+
+  <div id="donaciones" class="section">
+    <h2>Donaciones</h2>
+    <p>¡Ayúdanos a mantener y mejorar la plataforma!</p>
+    <p>Puedes apoyar a través de Nequi:</p>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Nequi_Logo.png/640px-Nequi_Logo.png" alt="Logo de Nequi">
+    <p>Número de Nequi: <strong>3203297982</strong></p>
+    <p>¡Cada contribución, grande o pequeña, es muy apreciada!</p>
+  </div>
+  </body>
 
 </html>
