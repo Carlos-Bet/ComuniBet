@@ -207,7 +207,7 @@
 
     // Your web app's Firebase configuration (ESTA ES LA CONFIGURACIÓN QUE ME PROPORCIONASTE)
     const firebaseConfig = {
-      apiKey: "AIzaSyAs19oiYivfPYSCl_-xcOFeBQMziZSeBn0",
+      apiKey: "AIzaSyAs19oiYivfPYSCl_-xcOFeBQMziZSeBn0", // <-- ¡TU API KEY INTEGRADA AQUÍ!
       authDomain: "comunibetstudio.firebaseapp.com",
       projectId: "comunibetstudio",
       storageBucket: "comunibetstudio.firebasestorage.app",
@@ -579,10 +579,10 @@
         document.getElementById('usuario').value = '';
         document.getElementById('contrasena').value = '';
 
-        // Ahora, una vez que el usuario ha iniciado sesión, el onAuthStateChangedListener se encargará de
+        // Una vez que el usuario ha iniciado sesión, el onAuthStateChangedListener se encargará de
         // cargar los datos del perfil y mostrar la sección del foro.
-        // No necesitamos recargar la página ni manipular la UI aquí directamente.
-        // El onAuthStateChangedListener ya tiene la lógica para esto.
+        // NO NECESITAMOS RECARGAR LA PÁGINA NI MANIPULAR LA UI AQUÍ DIRECTAMENTE.
+        // onAuthStateChangedListener ya tiene la lógica para esto.
 
       } catch (error) {
           const errorMessage = error.message;
