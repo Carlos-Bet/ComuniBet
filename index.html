@@ -268,7 +268,8 @@
         }
         return { userName: '', descripcion: '', seguidores: [], siguiendo: [] };
     }
-    window.cargarDatosPerfilDeFirestore = cargarDatosDatosPerfilDeFirestore;
+    // ¡¡¡CORRECCIÓN AQUÍ!!! Nombre de función correcto
+    window.cargarDatosPerfilDeFirestore = cargarDatosPerfilDeFirestore;
 
     // ** Funciones de UI y Lógica (usan las variables globales) **
     function toggleModo() {
@@ -465,7 +466,7 @@
           document.getElementById('login').style.display = 'none';
           
           // Cargar los datos del perfil del usuario logueado para "Mi Perfil"
-          const myProfileData = await cargarDatosPerfilDeFirestore(user.uid);
+          const myProfileData = await cargarDatosPerfilDeFirestore(user.uid); // ¡CORREGIDO AQUÍ!
           document.getElementById('nombrePerfil').textContent = myProfileData.userName; // Asegurar que el nombre en el perfil sea el correcto
           document.getElementById('descripcionPerfil').value = myProfileData.descripcion;
           document.getElementById('contadorSeguidores').textContent = myProfileData.seguidores.length;
