@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Comunibet</title>
 
-    <link rel="icon" href="/Logo moderno de ComuniBet.jpg" type="image/jpeg">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-TU_ID_DE_ADSENSE_AQUI"
         crossorigin="anonymous"></script>
     <style>
@@ -888,7 +887,7 @@
                         <strong onclick="verPerfil('${data.autor}')" style="cursor:pointer;color:var(--accent-color)">${data.autor}</strong>: ${data.partido} - ${data.apuesta}<br>${data.fecha} ${data.hora}<br>${data.comentario}
                         <div class='like-dislike'>
                             <button onclick="darLikeDislike(this, 'like')">👍 <span>${data.likes || 0}</span></button>
-                            <button onclick="darLikeDislike(this, 'dislike')">👎 <span>${data.dislikes || 0}</span></button>
+                            <button onclick="darLikeDislike(this, 'dislike')">👎 <span>${data.dislike  s || 0}</span></button>
                         </div>
                         <div class='comment-section'>
                             <textarea placeholder='Escribe un comentario...'></textarea>
