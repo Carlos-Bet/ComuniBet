@@ -237,10 +237,7 @@
         if (!userName) return null;
         const q = query(collection(db, "usuarios"), where("userName", "==", userName));
         const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-            return querySnapshot.docs[0].data().uid;
-        }
-        return null;
+        return !querySnapshot.empty;
     }
     window.getUidByUserName = getUidByUserName;
 
@@ -519,6 +516,8 @@
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, contrasena);
             const user = userCredential.user;
+            console.log("Usuario autenticado UID en registro:", user.uid); // DEBUG: Añadido para verificar UID
+            console.log("Email de usuario en registro:", user.email); // DEBUG: Añadido para verificar email
 
             // Al crear el usuario, inicializamos la descripción, seguidores y siguiendo
             await addDoc(collection(db, "usuarios"), {
@@ -922,7 +921,8 @@
   <nav id="main-menu" style="display: none;">
     <button onclick="mostrarSeccion('foro')">Foro</button>
     <button onclick="verPerfil(window.usuarioActual)">Mi Perfil</button>
-    <button onclick="mostrarSeccion('que-es-comunibet')">¿Qué es Comunibet?</button> <button onclick="mostrarSeccion('contacto')">Contacto</button>
+    <button onclick="mostrarSeccion('que-es-comunibet')">¿Qué es Comunibet?</button>
+    <button onclick="mostrarSeccion('contacto')">Contacto</button>
     <button onclick="mostrarSeccion('comunidad')">Comunidad</button>
     <button onclick="mostrarSeccion('donaciones')">Donaciones</button>
     <button onclick="cerrarSesion()">Cerrar sesión</button>
