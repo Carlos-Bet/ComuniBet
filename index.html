@@ -6,15 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Comunibet</title>
 
-  <!-- ********************************************** -->
-  <!-- ** CÓDIGO DE ADSENSE IMPLEMENTADO AQUÍ ** -->
-  <!-- ********************************************** -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-TU_ID_DE_ADSENSE_AQUI"
        crossorigin="anonymous"></script>
-  <!-- ********************************************** -->
-  <!-- ** FIN DEL CÓDIGO DE ADSENSE ** -->
-  <!-- ********************************************** -->
-
   <style>
     :root {
       --bg-color: #121212;
@@ -194,9 +187,6 @@
     }
   </style>
 
-  <!-- ********************************************************** -->
-  <!-- ** INICIO DEL CÓDIGO DE FIREBASE - Con 'defer' añadido ** -->
-  <!-- ********************************************************** -->
   <script type="module" defer>
     // Import the functions you need from the SDKs you need
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
@@ -228,28 +218,13 @@
     window.perfilVisitadoUid = null; // UID del perfil que se está viendo actualmente
     window.likes = new Map();
 
-    // ** Hacemos las funciones de Firebase globales para el otro script **
-    window.db = db;
-    window.auth = auth;
-    window.collection = collection;
-    window.addDoc = addDoc;
-    window.onSnapshot = onSnapshot;
-    window.query = query;
-    window.orderBy = orderBy;
-    window.deleteDoc = deleteDoc;
-    window.doc = doc;
-    window.updateDoc = updateDoc;
-    window.getDocs = getDocs;
-    window.where = where;
-    window.arrayUnion = arrayUnion; // Exponemos arrayUnion
-    window.arrayRemove = arrayRemove; // Exponemos arrayRemove
-    window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
-    window.signInWithEmailAndPassword = signInWithEmailAndPassword;
-    window.signOut = signOut;
-    window.onAuthStateChangedListener = onAuthStateChanged; // Exponemos onAuthStateChanged con este nombre
+    // ** Exponemos las funciones de Firebase SDK directamente si es necesario o las usamos internamente **
+    // Para simplificar, las funciones de Firebase SDK como collection, addDoc, etc., no necesitan ser
+    // puestas en 'window' si solo se usan dentro de este script.
+    // Solo las funciones que se llaman desde el HTML (como onClick) necesitan ser globales.
 
     // Función auxiliar para obtener el nombre de usuario por UID
-    window.getUserNameByUid = async function(uid) {
+    async function getUserNameByUid(uid) {
         if (!uid) return null;
         const q = query(collection(db, "usuarios"), where("uid", "==", uid));
         const querySnapshot = await getDocs(q);
@@ -257,10 +232,11 @@
             return querySnapshot.docs[0].data().userName;
         }
         return null;
-    };
+    }
+    window.getUserNameByUid = getUserNameByUid; // Exponemos para que otras funciones globales la usen
 
     // Función auxiliar para obtener el UID por nombre de usuario
-    window.getUidByUserName = async function(userName) {
+    async function getUidByUserName(userName) {
         if (!userName) return null;
         const q = query(collection(db, "usuarios"), where("userName", "==", userName));
         const querySnapshot = await getDocs(q);
@@ -268,17 +244,19 @@
             return querySnapshot.docs[0].data().uid;
         }
         return null;
-    };
+    }
+    window.getUidByUserName = getUidByUserName; // Exponemos para que otras funciones globales la usen
 
     // Función auxiliar para verificar si un nombre de usuario existe
-    window.checkIfUserNameExists = async function(username) {
+    async function checkIfUserNameExists(username) {
         const q = query(collection(db, "usuarios"), where("userName", "==", username));
         const querySnapshot = await getDocs(q);
         return !querySnapshot.empty;
-    };
+    }
+    window.checkIfUserNameExists = checkIfUserNameExists; // Exponemos
 
     // Nueva función para cargar los datos del perfil de un UID específico
-    window.cargarDatosPerfilDeFirestore = async function(uid) {
+    async function cargarDatosPerfilDeFirestore(uid) {
         if (!uid) return { userName: '', descripcion: '', seguidores: [], siguiendo: [] };
         const q = query(collection(db, "usuarios"), where("uid", "==", uid));
         const querySnapshot = await getDocs(q);
@@ -292,15 +270,9 @@
             };
         }
         return { userName: '', descripcion: '', seguidores: [], siguiendo: [] };
-    };
+    }
+    window.cargarDatosPerfilDeFirestore = cargarDatosPerfilDeFirestore; // Exponemos
 
-  </script>
-  <!-- ********************************************************** -->
-  <!-- ** FIN DEL CÓDIGO DE FIREBASE ** -->
-  <!-- ********************************************************** -->
-
-  <!-- Tu script principal con la lógica de la UI y las funciones de Firebase -->
-  <script defer>
     // ** Funciones de UI y Lógica (usan las variables globales) **
     function toggleModo() {
       document.body.classList.toggle('light');
@@ -333,7 +305,7 @@
     // Modificamos verPerfil para cargar el perfil correcto
     async function verPerfil(nombre) {
       // Buscar el UID del nombre de usuario que se quiere ver
-      const uidDelPerfil = await window.getUidByUserName(nombre);
+      const uidDelPerfil = await getUidByUserName(nombre); // Uso directo, no window.getUidByUserName
 
       if (!uidDelPerfil) {
         alert(`No se encontró el perfil de ${nombre}.`);
@@ -342,7 +314,7 @@
 
       window.perfilVisitadoUid = uidDelPerfil; // Establecer el UID del perfil que se está viendo
 
-      const datosPerfil = await window.cargarDatosPerfilDeFirestore(uidDelPerfil);
+      const datosPerfil = await cargarDatosPerfilDeFirestore(uidDelPerfil); // Uso directo
 
       document.getElementById('nombrePerfil').textContent = datosPerfil.userName;
       document.getElementById('descripcionPerfil').value = datosPerfil.descripcion;
@@ -389,11 +361,11 @@
 
       const nuevaDescripcion = document.getElementById('descripcionPerfil').value;
       try {
-        const q = window.query(window.collection(window.db, "usuarios"), window.where("uid", "==", window.usuarioAuthId));
-        const querySnapshot = await window.getDocs(q);
+        const q = query(collection(db, "usuarios"), where("uid", "==", window.usuarioAuthId));
+        const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
             const userDocRef = querySnapshot.docs[0].ref;
-            await window.updateDoc(userDocRef, {
+            await updateDoc(userDocRef, {
                 descripcion: nuevaDescripcion
             });
             alert("Descripción guardada.");
@@ -424,31 +396,31 @@
       const contadorSeguidores = document.getElementById("contadorSeguidores");
 
       try {
-        const miUsuarioQuery = window.query(window.collection(window.db, "usuarios"), window.where("uid", "==", window.usuarioAuthId));
-        const miUsuarioSnapshot = await window.getDocs(miUsuarioQuery);
+        const miUsuarioQuery = query(collection(db, "usuarios"), where("uid", "==", window.usuarioAuthId));
+        const miUsuarioSnapshot = await getDocs(miUsuarioQuery);
         const miUsuarioDocRef = miUsuarioSnapshot.docs[0].ref;
 
-        const otroUsuarioQuery = window.query(window.collection(window.db, "usuarios"), window.where("uid", "==", window.perfilVisitadoUid));
-        const otroUsuarioSnapshot = await window.getDocs(otroUsuarioQuery);
+        const otroUsuarioQuery = query(collection(db, "usuarios"), where("uid", "==", window.perfilVisitadoUid));
+        const otroUsuarioSnapshot = await getDocs(otroUsuarioQuery);
         const otroUsuarioDocRef = otroUsuarioSnapshot.docs[0].ref;
 
         if (btn.textContent === "Seguir") {
           // Si estaba en "Seguir", ahora lo va a seguir
-          await window.updateDoc(miUsuarioDocRef, {
-            siguiendo: window.arrayUnion(window.perfilVisitadoUid)
+          await updateDoc(miUsuarioDocRef, {
+            siguiendo: arrayUnion(window.perfilVisitadoUid)
           });
-          await window.updateDoc(otroUsuarioDocRef, {
-            seguidores: window.arrayUnion(window.usuarioAuthId)
+          await updateDoc(otroUsuarioDocRef, {
+            seguidores: arrayUnion(window.usuarioAuthId)
           });
           btn.textContent = "Siguiendo";
           contadorSeguidores.textContent = parseInt(contadorSeguidores.textContent) + 1;
         } else {
           // Si estaba en "Siguiendo", ahora lo va a dejar de seguir
-          await window.updateDoc(miUsuarioDocRef, {
-            siguiendo: window.arrayRemove(window.perfilVisitadoUid)
+          await updateDoc(miUsuarioDocRef, {
+            siguiendo: arrayRemove(window.perfilVisitadoUid)
           });
-          await window.updateDoc(otroUsuarioDocRef, {
-            seguidores: window.arrayRemove(window.usuarioAuthId)
+          await updateDoc(otroUsuarioDocRef, {
+            seguidores: arrayRemove(window.usuarioAuthId)
           });
           btn.textContent = "Seguir";
           contadorSeguidores.textContent = parseInt(contadorSeguidores.textContent) - 1;
@@ -463,11 +435,12 @@
     // ** LÓGICA DE AUTENTICACIÓN Y ESTADO DE USUARIO **
 
     // Escucha cambios en el estado de autenticación de Firebase
-    onAuthStateChangedListener(auth, async (user) => {
+    onAuthStateChanged(auth, async (user) => { // USO DIRECTO de onAuthStateChanged
       if (user) {
         console.log("onAuthStateChanged: Usuario autenticado. UID:", user.uid);
         window.usuarioAuthId = user.uid; // Actualiza la variable global
-        const userName = await window.getUserNameByUid(user.uid); // Usa la función global
+        const userName = await getUserNameByUid(user.uid); // Uso directo de la función
+
         if (userName) {
           console.log("onAuthStateChanged: Nombre de usuario encontrado:", userName);
           window.usuarioActual = userName; // Actualiza la variable global
@@ -483,7 +456,7 @@
           cargarPublicaciones(); // Carga las publicaciones
           
           // Cargar los datos del perfil del usuario logueado para "Mi Perfil"
-          const myProfileData = await window.cargarDatosPerfilDeFirestore(user.uid);
+          const myProfileData = await cargarDatosPerfilDeFirestore(user.uid); // Uso directo
           document.getElementById('descripcionPerfil').value = myProfileData.descripcion;
           document.getElementById('contadorSeguidores').textContent = myProfileData.seguidores.length;
           document.getElementById('btnSeguir').style.display = 'none'; // No mostrar seguir en tu propio perfil
@@ -492,7 +465,7 @@
         } else {
           console.warn("onAuthStateChanged: Usuario autenticado pero nombre de usuario NO ENCONTRADO en Firestore.");
           alert("Error: Nombre de usuario no encontrado en la base de datos. Por favor, asegúrate de haberte registrado correctamente o contacta al soporte.");
-          window.signOut(auth); // Desconectar si no se encuentra el nombre de usuario
+          signOut(auth); // Desconectar si no se encuentra el nombre de usuario
         }
       } else {
         console.log("onAuthStateChanged: No hay usuario autenticado.");
@@ -523,18 +496,18 @@
             return;
         }
 
-        const usernameExists = await window.checkIfUserNameExists(username);
+        const usernameExists = await checkIfUserNameExists(username); // Uso directo
         if (usernameExists) {
             alert("El nombre de usuario '" + username + "' ya está en uso. Por favor, elige otro.");
             return;
         }
 
         try {
-            const userCredential = await window.createUserWithEmailAndPassword(auth, email, contrasena);
+            const userCredential = await createUserWithEmailAndPassword(auth, email, contrasena);
             const user = userCredential.user;
 
             // Al crear el usuario, inicializamos la descripción, seguidores y siguiendo
-            await window.addDoc(window.collection(db, "usuarios"), {
+            await addDoc(collection(db, "usuarios"), { // Uso directo
                 uid: user.uid,
                 userName: username,
                 email: email,
@@ -572,17 +545,17 @@
       const contrasena = document.getElementById('contrasena').value;
 
       try {
-        const userCredential = await window.signInWithEmailAndPassword(auth, email, contrasena);
+        const userCredential = await signInWithEmailAndPassword(auth, email, contrasena);
         const user = userCredential.user;
         console.log("iniciarSesion: Inicio de sesión exitoso en Firebase Auth.");
 
         document.getElementById('usuario').value = '';
         document.getElementById('contrasena').value = '';
 
-        // Una vez que el usuario ha iniciado sesión, el onAuthStateChangedListener se encargará de
+        // Una vez que el usuario ha iniciado sesión, el onAuthStateChanged se encargará de
         // cargar los datos del perfil y mostrar la sección del foro.
         // NO NECESITAMOS RECARGAR LA PÁGINA NI MANIPULAR LA UI AQUÍ DIRECTAMENTE.
-        // onAuthStateChangedListener ya tiene la lógica para esto.
+        // onAuthStateChanged ya tiene la lógica para esto.
 
       } catch (error) {
           const errorMessage = error.message;
@@ -602,9 +575,9 @@
     }
 
     function cerrarSesion() {
-      window.signOut(auth).then(() => {
+      signOut(auth).then(() => {
         alert("Sesión cerrada.");
-        // onAuthStateChangedListener se encargará de resetear la UI a login/registro
+        // onAuthStateChanged se encargará de resetear la UI a login/registro
       }).catch((error) => {
         console.error("Error al cerrar sesión:", error);
       });
@@ -648,7 +621,7 @@
       }
 
       try {
-        await window.addDoc(window.collection(db, "publicaciones"), {
+        await addDoc(collection(db, "publicaciones"), {
           autor: window.usuarioActual,
           autorUid: window.usuarioAuthId,
           partido: partido,
@@ -692,7 +665,7 @@
       }
 
       try {
-        await window.addDoc(window.collection(db, "publicaciones", postId, "comentarios"), {
+        await addDoc(collection(db, "publicaciones", postId, "comentarios"), {
           autor: window.usuarioActual,
           autorUid: window.usuarioAuthId,
           texto: texto,
@@ -764,7 +737,7 @@
       }
 
       try {
-          await window.updateDoc(window.doc(db, docRefPath), {
+          await updateDoc(doc(db, docRefPath), {
               likes: newLikes,
               dislikes: newDislikes
           });
@@ -797,7 +770,7 @@
 
       if (confirm("¿Estás seguro de que quieres borrar esta publicación y todos sus comentarios?")) {
         try {
-          await window.deleteDoc(window.doc(db, "publicaciones", postId));
+          await deleteDoc(doc(db, "publicaciones", postId));
           console.log("Publicación borrada con éxito de Firestore.");
         } catch (e) {
           console.error("Error al borrar publicación de Firestore:", e);
@@ -812,9 +785,9 @@
       const publicacionesDiv = document.getElementById('publicaciones');
       publicacionesDiv.innerHTML = '';
 
-      const q = window.query(window.collection(db, "publicaciones"), window.orderBy("timestamp", "desc"));
+      const q = query(collection(db, "publicaciones"), orderBy("timestamp", "desc"));
 
-      window.onSnapshot(q, (snapshot) => {
+      onSnapshot(q, (snapshot) => {
         publicacionesDiv.innerHTML = '';
         snapshot.forEach((doc) => {
           const data = doc.data();
@@ -851,9 +824,9 @@
     }
 
     function cargarComentarios(postId, commentsContainer, toggleButton) {
-      const qComments = window.query(window.collection(db, "publicaciones", postId, "comentarios"), window.orderBy("timestamp", "asc"));
+      const qComments = query(collection(db, "publicaciones", postId, "comentarios"), orderBy("timestamp", "asc"));
 
-      window.onSnapshot(qComments, (snapshot) => {
+      onSnapshot(qComments, (snapshot) => {
         commentsContainer.innerHTML = '';
         snapshot.forEach((doc) => {
           const data = doc.data();
@@ -925,6 +898,8 @@
     window.borrar = borrar;
     window.toggleComentariosPrincipales = toggleComentariosPrincipales;
     window.toggleRespuestas = toggleRespuestas;
+    window.cargarPublicaciones = cargarPublicaciones; // Asegurarse de que cargarPublicaciones sea global
+                                                     // si se le llama directamente de onAuthStateChanged
 
   </script>
 </head>
@@ -940,7 +915,6 @@
     <div class="notification-icon" onclick="mostrarNotificaciones()">🔔<span id="noti-count">0</span></div>
   </nav>
 
-  <!-- Sección de Registro -->
   <div id="registro" class="section active">
     <div class="form-section">
       <h2>Regístrate</h2>
@@ -952,7 +926,6 @@
     </div>
   </div>
 
-  <!-- Sección de Login -->
   <div id="login" class="section">
     <div class="form-section">
       <h2>Iniciar Sesión</h2>
