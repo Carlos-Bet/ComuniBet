@@ -204,24 +204,24 @@
         <button onclick="cerrarSesion()">Cerrar Sesión</button>
     </nav>
 
-    <section id="login" class="section active">
-        <h2>Iniciar Sesión</h2>
+    <section id="auth-entry" class="section active">
+        <h2>Bienvenido a Comunibet</h2>
         <div class="form-section">
-            <input type="email" id="usuario" placeholder="Correo electrónico">
-            <input type="password" id="contrasena" placeholder="Contraseña">
-            <button onclick="iniciarSesion()">Iniciar Sesión</button>
-            <p>¿No tienes cuenta? <a href="#" onclick="mostrarRegistroScreen()">Regístrate aquí</a></p>
+            <p>Por favor, inicia sesión para continuar.</p>
+            <button onclick="signInWithGoogle()" style="background-color: #DB4437; color: white;">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon" style="width:20px; vertical-align: middle; margin-right: 10px;">
+                Iniciar Sesión con Google
+            </button>
         </div>
     </section>
 
-    <section id="registro" class="section">
-        <h2>Registrarse</h2>
+    <section id="selectUserName" class="section">
+        <h2>Elige tu Nombre de Usuario</h2>
         <div class="form-section">
-            <input type="email" id="nuevoEmail" placeholder="Correo electrónico">
-            <input type="password" id="nuevaContrasena" placeholder="Contraseña">
-            <input type="text" id="nuevoNombreUsuario" placeholder="Nombre de usuario (ej: JuanitoApuestas)">
-            <button onclick="registrarse()">Registrarme</button>
-            <p>¿Ya tienes cuenta? <a href="#" onclick="mostrarLoginScreen()">Inicia sesión aquí</a></p>
+            <p>Es tu primera vez. Por favor, elige un nombre de usuario único:</p>
+            <input type="text" id="chosenUserName" placeholder="Tu nombre de usuario (ej: JuanitoApuestas)">
+            <p id="userNameError" style="color: red; display: none;">Este nombre de usuario ya está en uso o es inválido.</p>
+            <button onclick="saveChosenUserName()">Guardar Nombre de Usuario</button>
         </div>
     </section>
 
@@ -255,14 +255,13 @@
 
     <script type="module" defer>
         // Import the functions you need from the SDKs you need
-        // *** TODAS LAS IMPORTACIONES DE FIREBASE SE ACTUALIZAN A LA VERSIÓN 12.0.0 ***
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-        // Importamos 'setDoc' y 'doc' aquí
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc, getDocs, where, arrayUnion, arrayRemove, setDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js"; // Descomentado si quieres usar Analytics
+        // Importamos getDoc para obtener un solo documento por ID
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc, getDocs, where, arrayUnion, arrayRemove, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+        import { getAuth, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js";
 
-        // Your web app's Firebase configuration (ESTA ES LA CONFIGURACIÓN QUE ME PROPORCIONASTE)
+        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAs19oiYivfPYSCl_-xcOFeBQMziZSeBn0", // TU API KEY INTEGRADA AQUÍ
             authDomain: "comunibetstudio.firebaseapp.com",
@@ -277,21 +276,22 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
-        const analytics = getAnalytics(app); // Inicializa Analytics
+        const analytics = getAnalytics(app);
 
         // ** Variables globales para el estado del usuario y el perfil visitado **
         window.usuarioActual = null; // Nombre de usuario del que está logueado
         window.usuarioAuthId = null; // UID del que está logueado
         window.perfilVisitadoUid = null; // UID del perfil que se está viendo actualmente
         window.likes = new Map();
+        let authUserGlobal = null; // Variable para mantener el objeto user de Firebase Auth
 
         // Función auxiliar para obtener el nombre de usuario por UID
         async function getUserNameByUid(uid) {
             if (!uid) return null;
-            const q = query(collection(db, "usuarios"), where("uid", "==", uid));
-            const querySnapshot = await getDocs(q);
-            if (!querySnapshot.empty) {
-                return querySnapshot.docs[0].data().userName;
+            const userDocRef = doc(db, "usuarios", uid);
+            const userDocSnap = await getDoc(userDocRef);
+            if (userDocSnap.exists() && userDocSnap.data().userName) {
+                return userDocSnap.data().userName;
             }
             return null;
         }
@@ -302,7 +302,7 @@
             if (!userName) return null;
             const q = query(collection(db, "usuarios"), where("userName", "==", userName));
             const querySnapshot = await getDocs(q);
-            if (!querySnapshot.empty) { // Asegúrate de devolver el UID si se encuentra
+            if (!querySnapshot.empty) {
                 return querySnapshot.docs[0].data().uid;
             }
             return null;
@@ -320,10 +320,10 @@
         // Nueva función para cargar los datos del perfil de un UID específico
         async function cargarDatosPerfilDeFirestore(uid) {
             if (!uid) return { userName: '', descripcion: '', seguidores: [], siguiendo: [] };
-            const q = query(collection(db, "usuarios"), where("uid", "==", uid));
-            const querySnapshot = await getDocs(q);
-            if (!querySnapshot.empty) {
-                const userData = querySnapshot.docs[0].data();
+            const userDocRef = doc(db, "usuarios", uid);
+            const userDocSnap = await getDoc(userDocRef);
+            if (userDocSnap.exists()) {
+                const userData = userDocSnap.data();
                 return {
                     userName: userData.userName,
                     descripcion: userData.descripcion || '',
@@ -340,31 +340,20 @@
             document.body.classList.toggle('light');
         }
 
+        // Función general para mostrar secciones, con un manejo especial para la pantalla de inicio
         function mostrarSeccion(id) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            // Asegurarse de que las secciones de registro/login se oculten si no son la activa
-            if (id !== 'login' && id !== 'registro') {
-                document.getElementById('registro').style.display = 'none';
-                document.getElementById('login').style.display = 'none';
+            // Oculta todas las secciones de autenticación/registro si se muestra una sección principal
+            if (id !== 'auth-entry' && id !== 'selectUserName') {
+                document.getElementById('auth-entry').style.display = 'none';
+                document.getElementById('selectUserName').style.display = 'none';
+                document.getElementById('main-menu').style.display = 'flex';
+            } else {
+                document.getElementById('main-menu').style.display = 'none';
             }
         }
 
-        function mostrarLoginScreen() {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active')); // Oculta todas las secciones
-            document.getElementById('login').classList.add('active'); // Muestra la sección de login
-            document.getElementById('registro').style.display = 'none'; // Asegura que la sección de registro esté oculta
-            document.getElementById('login').style.display = 'block'; // Asegura que la sección de login sea visible
-        }
-
-        function mostrarRegistroScreen() {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active')); // Oculta todas las secciones
-            document.getElementById('registro').classList.add('active'); // Muestra la sección de registro
-            document.getElementById('login').style.display = 'none'; // Asegura que la sección de login esté oculta
-            document.getElementById('registro').style.display = 'block'; // Asegura que la sección de registro sea visible
-        }
-
-        // Modificamos verPerfil para cargar el perfil correcto y controlar la edición
         async function verPerfil(nombre) {
             const uidDelPerfil = await getUidByUserName(nombre);
 
@@ -373,7 +362,7 @@
                 return;
             }
 
-            window.perfilVisitadoUid = uidDelPerfil; // Establecer el UID del perfil que se está viendo
+            window.perfilVisitadoUid = uidDelPerfil;
 
             const datosPerfil = await cargarDatosPerfilDeFirestore(uidDelPerfil);
 
@@ -387,17 +376,14 @@
 
 
             if (uidDelPerfil === window.usuarioAuthId) {
-                // Es nuestro propio perfil
-                btnSeguir.style.display = 'none'; // No se puede seguir a uno mismo
-                descripcionInput.readOnly = false; // Podemos editar nuestra descripción
-                guardarDescripcionBtn.style.display = 'inline-block'; // Mostrar botón Guardar
+                btnSeguir.style.display = 'none';
+                descripcionInput.readOnly = false;
+                guardarDescripcionBtn.style.display = 'inline-block';
             } else {
-                // Es el perfil de otra persona
-                btnSeguir.style.display = 'inline-block'; // Mostrar botón de seguir
-                descripcionInput.readOnly = true; // NO podemos editar su descripción (solo lectura)
-                guardarDescripcionBtn.style.display = 'none'; // Ocultar botón Guardar para perfiles ajenos
+                btnSeguir.style.display = 'inline-block';
+                descripcionInput.readOnly = true;
+                guardarDescripcionBtn.style.display = 'none';
 
-                // Verificar si ya seguimos a esta persona
                 if (window.usuarioAuthId && datosPerfil.seguidores.includes(window.usuarioAuthId)) {
                     btnSeguir.textContent = "Siguiendo";
                 } else {
@@ -424,17 +410,11 @@
 
             const nuevaDescripcion = document.getElementById('descripcionPerfil').value;
             try {
-                const q = query(collection(db, "usuarios"), where("uid", "==", window.usuarioAuthId));
-                const querySnapshot = await getDocs(q);
-                if (!querySnapshot.empty) {
-                    const userDocRef = querySnapshot.docs[0].ref;
-                    await updateDoc(userDocRef, {
-                        descripcion: nuevaDescripcion
-                    });
-                    alert("Descripción guardada.");
-                } else {
-                    alert("Error: No se encontró tu perfil para guardar la descripción.");
-                }
+                const userDocRef = doc(db, "usuarios", window.usuarioAuthId);
+                await updateDoc(userDocRef, {
+                    descripcion: nuevaDescripcion
+                });
+                alert("Descripción guardada.");
             } catch (e) {
                 console.error("Error al guardar descripción:", e);
                 alert("Hubo un error al guardar la descripción.");
@@ -459,28 +439,24 @@
             const contadorSeguidores = document.getElementById("contadorSeguidores");
 
             try {
-                // Obtenemos la referencia al documento del usuario actual
-                const miUsuarioQuery = query(collection(db, "usuarios"), where("uid", "==", window.usuarioAuthId));
-                const miUsuarioSnapshot = await getDocs(miUsuarioQuery);
-                if (miUsuarioSnapshot.empty) {
+                const miUsuarioDocRef = doc(db, "usuarios", window.usuarioAuthId);
+                const otroUsuarioDocRef = doc(db, "usuarios", window.perfilVisitadoUid);
+
+                const miUsuarioSnapshot = await getDoc(miUsuarioDocRef);
+                const otroUsuarioSnapshot = await getDoc(otroUsuarioDocRef);
+
+                if (!miUsuarioSnapshot.exists()) {
                     console.error("Documento de usuario actual no encontrado en Firestore.");
                     alert("Error: Tu perfil no se encontró para actualizar el seguimiento.");
                     return;
                 }
-                const miUsuarioDocRef = miUsuarioSnapshot.docs[0].ref;
-
-                // Obtenemos la referencia al documento del usuario a seguir/dejar de seguir
-                const otroUsuarioQuery = query(collection(db, "usuarios"), where("uid", "==", window.perfilVisitadoUid));
-                const otroUsuarioSnapshot = await getDocs(otroUsuarioQuery);
-                if (otroUsuarioSnapshot.empty) {
+                if (!otroUsuarioSnapshot.exists()) {
                     console.error("Documento del otro usuario no encontrado en Firestore.");
                     alert("Error: El perfil que intentas seguir no se encontró.");
                     return;
                 }
-                const otroUsuarioDocRef = otroUsuarioSnapshot.docs[0].ref;
 
                 if (btn.textContent === "Seguir") {
-                    // Si estaba en "Seguir", ahora lo va a seguir
                     await updateDoc(miUsuarioDocRef, {
                         siguiendo: arrayUnion(window.perfilVisitadoUid)
                     });
@@ -490,7 +466,6 @@
                     btn.textContent = "Siguiendo";
                     contadorSeguidores.textContent = parseInt(contadorSeguidores.textContent) + 1;
                 } else {
-                    // Si estaba en "Siguiendo", ahora lo va a dejar de seguir
                     await updateDoc(miUsuarioDocRef, {
                         siguiendo: arrayRemove(window.perfilVisitadoUid)
                     });
@@ -502,7 +477,6 @@
                 }
             } catch (e) {
                 console.error("Error al seguir/dejar de seguir:", e);
-                // Aquí puedes dar un mensaje más específico si el error.code es relevante
                 alert("Hubo un error al actualizar la relación de seguimiento. Revisa la consola para más detalles.");
             }
         }
@@ -510,161 +484,160 @@
 
         // ** LÓGICA DE AUTENTICACIÓN Y ESTADO DE USUARIO **
 
-        // Escucha cambios en el estado de autenticación de Firebase
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                console.log("onAuthStateChanged: Usuario autenticado. UID:", user.uid);
-                window.usuarioAuthId = user.uid; // Actualiza la variable global
-                const userName = await getUserNameByUid(user.uid);
-
-                if (userName) {
-                    console.log("onAuthStateChanged: Nombre de usuario encontrado:", userName);
-                    window.usuarioActual = userName; // Actualiza la variable global
-
-                    // Establecer el perfil visitado como el propio al iniciar sesión o cargar la página
-                    window.perfilVisitadoUid = user.uid;
-
-                    mostrarSeccion('foro'); // Muestra el foro por defecto al iniciar sesión
-                    document.getElementById('main-menu').style.display = 'flex';
-                    document.getElementById('registro').style.display = 'none'; // Asegura que registro se oculta
-                    document.getElementById('login').style.display = 'none'; // Asegura que login se oculta
-
-                    // Cargar los datos del perfil del usuario logueado para "Mi Perfil"
-                    const myProfileData = await cargarDatosPerfilDeFirestore(user.uid);
-                    document.getElementById('nombrePerfil').textContent = myProfileData.userName; // Asegurar que el nombre en el perfil sea el correcto
-                    document.getElementById('descripcionPerfil').value = myProfileData.descripcion;
-                    document.getElementById('contadorSeguidores').textContent = myProfileData.seguidores.length;
-
-                    // Configuración específica para el propio perfil (editable)
-                    document.getElementById('btnSeguir').style.display = 'none'; // No mostrar seguir en tu propio perfil
-                    document.getElementById('descripcionPerfil').readOnly = false; // Tu descripción es editable
-                    document.getElementById('guardarDescripcionBtn').style.display = 'inline-block'; // Mostrar botón Guardar
-
-                    cargarPublicaciones(); // Carga las publicaciones
+        // Función para manejar el inicio de sesión con Google
+        async function signInWithGoogle() {
+            const provider = new GoogleAuthProvider();
+            try {
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+                console.log("DEBUG: Inicio de sesión con Google exitoso. UID:", user.uid);
+                // onAuthStateChanged se encargará del resto de la lógica de UI y creación de perfil
+            } catch (error) {
+                console.error("Error al iniciar sesión con Google:", error);
+                const errorCode = error.code;
+                const errorMessage = error.message;
+                if (errorCode === 'auth/popup-closed-by-user') {
+                    // El usuario cerró la ventana de pop-up
+                } else if (errorCode === 'auth/cancelled-popup-request') {
+                    // Ya hay una operación de pop-up en curso
+                } else if (errorCode === 'auth/account-exists-with-different-credential') {
+                    alert("Ya existe una cuenta con este correo electrónico usando otro método de inicio de sesión.");
                 } else {
-                    console.warn("onAuthStateChanged: Usuario autenticado pero nombre de usuario NO ENCONTRADO en Firestore.");
-                    alert("Error: Nombre de usuario no encontrado en la base de datos. Por favor, asegúrate de haberte registrado correctamente o contacta al soporte.");
-                    signOut(auth); // Desconectar si no se encuentra el nombre de usuario
+                    alert(`Error al iniciar sesión con Google: ${errorMessage}`);
                 }
-            } else {
-                console.log("onAuthStateChanged: No hay usuario autenticado.");
-                window.usuarioActual = null;
-                window.usuarioAuthId = null;
-                window.perfilVisitadoUid = null; // Reiniciar perfil visitado
-                document.querySelectorAll('.section').forEach(s => s.classList.remove('active')); // Oculta todas las secciones
-
-                // Decide qué sección mostrar por defecto (login) y oculta la otra
-                document.getElementById('login').classList.add('active'); // Muestra login
-                document.getElementById('login').style.display = 'block';
-                document.getElementById('registro').style.display = 'none'; // Oculta registro
-
-                document.getElementById('main-menu').style.display = 'none';
             }
-        });
+        }
 
-        async function registrarse() {
-            const email = document.getElementById('nuevoEmail').value;
-            const contrasena = document.getElementById('nuevaContrasena').value;
-            const username = document.getElementById('nuevoNombreUsuario').value;
+        // Función para guardar el nombre de usuario elegido por un nuevo usuario de Google
+        async function saveChosenUserName() {
+            const chosenUserNameInput = document.getElementById('chosenUserName');
+            const userNameErrorDiv = document.getElementById('userNameError');
+            const userName = chosenUserNameInput.value.trim();
 
-            if (!email || !contrasena || !username) {
-                alert("Por favor, completa todos los campos (email, contraseña, nombre de usuario).");
+            userNameErrorDiv.style.display = 'none'; // Ocultar errores previos
+
+            if (!userName) {
+                userNameErrorDiv.textContent = "El nombre de usuario no puede estar vacío.";
+                userNameErrorDiv.style.display = 'block';
+                return;
+            }
+            if (userName.length < 3 || userName.length > 20) {
+                userNameErrorDiv.textContent = "El nombre de usuario debe tener entre 3 y 20 caracteres.";
+                userNameErrorDiv.style.display = 'block';
+                return;
+            }
+            if (!/^[a-zA-Z0-9_]+$/.test(userName)) {
+                userNameErrorDiv.textContent = "El nombre de usuario solo puede contener letras, números y guiones bajos.";
+                userNameErrorDiv.style.display = 'block';
                 return;
             }
 
-            const usernameExists = await checkIfUserNameExists(username);
-            if (usernameExists) {
-                alert("El nombre de usuario '" + username + "' ya está en uso. Por favor, elige otro.");
+
+            if (!authUserGlobal) {
+                alert("Error: No hay un usuario autenticado para asignar el nombre de usuario.");
+                // Forzar un cierre de sesión para intentar de nuevo
+                signOut(auth);
                 return;
             }
+
+            const userUid = authUserGlobal.uid;
 
             try {
-                console.log("DEBUG: Intentando crear usuario con email:", email);
-                const userCredential = await createUserWithEmailAndPassword(auth, email, contrasena);
-                const user = userCredential.user;
+                const usernameExists = await checkIfUserNameExists(userName);
+                if (usernameExists) {
+                    userNameErrorDiv.textContent = "Este nombre de usuario ya está en uso. Por favor, elige otro.";
+                    userNameErrorDiv.style.display = 'block';
+                    return;
+                }
 
-                console.log("DEBUG: Usuario autenticado exitosamente en Firebase Auth:");
-                console.log("DEBUG: user.uid:", user.uid);
-                console.log("DEBUG: user.email:", user.email);
-
-                // *** CAMBIO CRÍTICO AQUÍ: Usar doc() y setDoc() para establecer el UID como ID del documento ***
-                // En lugar de addDoc, que genera un ID automático, usamos setDoc con el UID como ID.
-                await setDoc(doc(db, "usuarios", user.uid), { // user.uid será el ID del documento
-                    uid: user.uid,
-                    userName: username,
-                    email: email,
+                // Crear el documento del usuario en Firestore con el nombre de usuario elegido
+                const userDocRef = doc(db, "usuarios", userUid);
+                await setDoc(userDocRef, {
+                    uid: userUid,
+                    userName: userName,
+                    email: authUserGlobal.email,
                     createdAt: Date.now(),
                     descripcion: '',
                     seguidores: [],
                     siguiendo: []
                 });
-                console.log("DEBUG: Documento de usuario añadido a Firestore exitosamente con UID como ID.");
 
+                console.log("Nombre de usuario guardado exitosamente para UID:", userUid, "Nombre:", userName);
+                alert("¡Bienvenido! Tu nombre de usuario ha sido guardado.");
+                // Una vez guardado, el onAuthStateChanged debería volver a dispararse
+                // y ahora sí encontrará el nombre de usuario, llevando al foro.
+                // Si no se dispara automáticamente, podríamos forzar un redireccionamiento o llamar a cargarPublicaciones()
+                mostrarSeccion('foro'); // Muestra directamente el foro si el nombre de usuario se guardó
+                document.getElementById('main-menu').style.display = 'flex'; // Asegura que el menú principal se muestre
+                // Limpiar el campo
+                chosenUserNameInput.value = '';
 
-                alert("Cuenta creada. Por favor, inicia sesión.");
-                document.getElementById('nuevoEmail').value = '';
-                document.getElementById('nuevaContrasena').value = '';
-                document.getElementById('nuevoNombreUsuario').value = '';
-                mostrarLoginScreen();
-            } catch (error) {
-                const errorMessage = error.message;
-                console.error("Error de registro (Firebase Auth o Firestore):", error);
-                if (error.code === 'auth/email-already-in-use') {
-                    alert("El correo electrónico ya está en uso. Por favor, usa otro o inicia sesión.");
-                } else if (error.code === 'auth/invalid-email') {
-                    alert("El formato del correo electrónico es inválido.");
-                } else if (error.code === 'auth/weak-password') {
-                    alert("La contraseña es demasiado débil (debe tener al menos 6 caracteres).");
-                } else if (error.code === 'auth/operation-not-allowed') {
-                    alert("El registro con correo/contraseña no está habilitado en tu proyecto Firebase. Por favor, contacta al administrador.");
-                }
-                else {
-                    alert(`Error al registrar: ${errorMessage}`);
-                }
+            } catch (e) {
+                console.error("Error al guardar el nombre de usuario:", e);
+                userNameErrorDiv.textContent = `Error al guardar: ${e.message}. Inténtalo de nuevo.`;
+                userNameErrorDiv.style.display = 'block';
             }
         }
 
-        async function iniciarSesion() {
-            const email = document.getElementById('usuario').value;
-            const contrasena = document.getElementById('contrasena').value;
 
-            try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, contrasena);
-                const user = userCredential.user;
-                console.log("iniciarSesion: Inicio de sesión exitoso en Firebase Auth.");
+        // Escucha cambios en el estado de autenticación de Firebase
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                console.log("onAuthStateChanged: Usuario autenticado. UID:", user.uid);
+                authUserGlobal = user; // Almacena el objeto user en la variable global
+                window.usuarioAuthId = user.uid; // Actualiza la variable global
 
-                document.getElementById('usuario').value = '';
-                document.getElementById('contrasena').value = '';
+                // Verificar si el usuario ya tiene un documento de perfil en Firestore
+                const userDocRef = doc(db, "usuarios", user.uid);
+                const userDocSnap = await getDoc(userDocRef);
 
-                // Una vez que el usuario ha iniciado sesión, el onAuthStateChanged se encargará de
-                // cargar los datos del perfil y mostrar la sección del foro.
-                // NO NECESITAMOS RECARGAR LA PÁGINA NI MANIPULAR LA UI AQUÍ DIRECTAMENTE.
-                // onAuthStateChanged ya tiene la lógica para esto.
+                if (userDocSnap.exists() && userDocSnap.data().userName) {
+                    // El usuario ya tiene un perfil completo con nombre de usuario
+                    window.usuarioActual = userDocSnap.data().userName;
+                    window.perfilVisitadoUid = user.uid;
 
-            } catch (error) {
-                const errorMessage = error.message;
-                console.error("iniciarSesion: Error al intentar iniciar sesión:", error);
-                if (error.code === 'auth/invalid-email') {
-                    alert("El formato del correo electrónico es inválido.");
-                } else if (error.code === 'auth/user-disabled') {
-                    alert("Tu cuenta ha sido deshabilitada.");
-                } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-login-credentials') {
-                    alert("Email o contraseña incorrectos.");
-                } else if (error.code === 'auth/too-many-requests') {
-                    alert("Demasiados intentos fallidos. Inténtalo de nuevo más tarde.");
+                    mostrarSeccion('foro');
+                    document.getElementById('main-menu').style.display = 'flex';
+
+                    const myProfileData = await cargarDatosPerfilDeFirestore(user.uid);
+                    document.getElementById('nombrePerfil').textContent = myProfileData.userName;
+                    document.getElementById('descripcionPerfil').value = myProfileData.descripcion;
+                    document.getElementById('contadorSeguidores').textContent = myProfileData.seguidores.length;
+
+                    document.getElementById('btnSeguir').style.display = 'none';
+                    document.getElementById('descripcionPerfil').readOnly = false;
+                    document.getElementById('guardarDescripcionBtn').style.display = 'inline-block';
+
+                    cargarPublicaciones();
+                } else {
+                    // El usuario está autenticado con Google, pero no tiene un nombre de usuario en Firestore
+                    console.log("Usuario de Google autenticado pero sin nombre de usuario en Firestore. Mostrando selección de nombre.");
+                    mostrarSeccion('selectUserName'); // Dirige a la pantalla para elegir nombre de usuario
+                    document.getElementById('main-menu').style.display = 'none';
                 }
-                else {
-                    alert(`Error al iniciar sesión: ${errorMessage}`);
-                }
+            } else {
+                console.log("onAuthStateChanged: No hay usuario autenticado.");
+                window.usuarioActual = null;
+                window.usuarioAuthId = null;
+                window.perfilVisitadoUid = null;
+                authUserGlobal = null; // Limpiar el objeto user
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+
+                document.getElementById('auth-entry').classList.add('active'); // Muestra la pantalla de inicio de sesión
+                document.getElementById('auth-entry').style.display = 'block'; // Asegura que se vea
+                document.getElementById('selectUserName').style.display = 'none'; // Asegura que se oculte
+                document.getElementById('main-menu').style.display = 'none';
             }
-        }
+        });
+
 
         function cerrarSesion() {
             signOut(auth).then(() => {
                 alert("Sesión cerrada.");
-                // onAuthStateChanged se encargará de resetear la UI a login/registro
+                // onAuthStateChanged se encargará de resetear la UI a la pantalla de entrada
             }).catch((error) => {
                 console.error("Error al cerrar sesión:", error);
+                alert("Error al cerrar sesión.");
             });
         }
 
@@ -947,7 +920,7 @@
                 btn.textContent = `Ocultar comentarios (${mainCommentsDiv.children.length})`;
             } else {
                 mainCommentsDiv.classList.add('hidden');
-                btn.textContent = `Mostrar comentarios (${mainCommentsDiv.children.length})`;
+                btn.textContent = `Ocultar comentarios (${mainCommentsDiv.children.length})`; // Corrección aquí
             }
         }
 
@@ -964,18 +937,15 @@
         }
 
         // Adjuntar las funciones que necesitan ser accesibles globalmente al objeto window
-        // Esto es necesario porque estas funciones son llamadas desde el HTML (onclick)
         window.toggleModo = toggleModo;
         window.mostrarSeccion = mostrarSeccion;
-        window.mostrarLoginScreen = mostrarLoginScreen;
-        window.mostrarRegistroScreen = mostrarRegistroScreen;
         window.verPerfil = verPerfil;
         window.mostrarNotificaciones = mostrarNotificaciones;
         window.buscar = buscar;
         window.guardarDescripcion = guardarDescripcion;
         window.toggleSeguir = toggleSeguir;
-        window.registrarse = registrarse;
-        window.iniciarSesion = iniciarSesion;
+        window.signInWithGoogle = signInWithGoogle; // Ahora la única opción de login/registro
+        window.saveChosenUserName = saveChosenUserName; // Nueva función para guardar el nombre de usuario
         window.cerrarSesion = cerrarSesion;
         window.publicar = publicar;
         window.comentar = comentar;
