@@ -2,961 +2,992 @@
 <html lang="es">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Comunibet</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comunibet</title>
 
-  <script
-    async
-    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-TU_ID_DE_ADSENSE_AQUI"
-    crossorigin="anonymous"></script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-TU_ID_DE_ADSENSE_AQUI"
+        crossorigin="anonymous"></script>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --text-color: #fff;
+            --header-color: #1e1e1e;
+            --nav-color: #333;
+            --button-bg: #444;
+            --accent-color: #1e90ff;
+        }
 
-  <style>
-    :root {
-      --bg-color: #121212;
-      --text-color: #fff;
-      --header-color: #1e1e1e;
-      --nav-color: #333;
-      --button-bg: #444;
-      --accent-color: #1e90ff;
-    }
+        body.light {
+            --bg-color: #f5f5f5;
+            --text-color: #000;
+            --header-color: #e0e0e0;
+            --nav-color: #ccc;
+            --button-bg: #ddd;
+            --accent-color: #0077cc;
+        }
 
-    body.light {
-      --bg-color: #f5f5f5;
-      --text-color: #000;
-      --header-color: #e0e0e0;
-      --nav-color: #ccc;
-      --button-bg: #ddd;
-      --accent-color: #0077cc;
-    }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
 
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      transition: background-color 0.3s, color 0.3s;
-    }
+        header {
+            background-color: var(--header-color);
+            padding: 1rem;
+            text-align: center;
+            font-size: 2rem;
+            font-weight: bold;
+        }
 
-    header {
-      background-color: var(--header-color);
-      padding: 1rem;
-      text-align: center;
-      font-size: 2rem;
-      font-weight: bold;
-    }
+        nav {
+            background-color: var(--nav-color);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            padding: 1rem;
+        }
 
-    nav {
-      background-color: var(--nav-color);
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 1rem;
-      padding: 1rem;
-    }
+        nav button {
+            background-color: var(--button-bg);
+            color: var(--text-color);
+            border: none;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
 
-    nav button {
-      background-color: var(--button-bg);
-      color: var(--text-color);
-      border: none;
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
+        .section {
+            display: none;
+            padding: 1rem;
+        }
 
-    .section {
-      display: none;
-      padding: 1rem;
-    }
+        .active {
+            display: block;
+        }
 
-    .active {
-      display: block;
-    }
+        .form-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-width: 300px;
+            margin: auto;
+        }
 
-    .form-section {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      max-width: 300px;
-      margin: auto;
-    }
+        .form-section input,
+        .form-section textarea {
+            padding: 0.5rem;
+            font-size: 1rem;
+        }
 
-    .form-section input,
-    .form-section textarea {
-      padding: 0.5rem;
-      font-size: 1rem;
-    }
+        .form-section button {
+            padding: 0.5rem;
+            font-size: 1rem;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+        }
 
-    .form-section button {
-      padding: 0.5rem;
-      font-size: 1rem;
-      background-color: var(--accent-color);
-      color: white;
-      border: none;
-    }
+        .post {
+            background-color: #222;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
 
-    .post {
-      background-color: #222;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      position: relative;
-    }
+        .comment-section {
+            margin-top: 1rem;
+        }
 
-    .comment-section {
-      margin-top: 1rem;
-    }
+        /* Estilo para los comentarios principales */
+        .comment {
+            background-color: #2b2b2b;
+            padding: 0.8rem;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+        }
 
-    .comment {
-      background-color: #2b2b2b;
-      padding: 0.8rem;
-      margin-bottom: 0.5rem;
-      border-radius: 4px;
-    }
+        /* Estilo para las respuestas anidadas */
+        .nested-comments {
+            margin-left: 2rem;
+            border-left: 2px solid #555;
+            padding-left: 1rem;
+            margin-top: 0.5rem;
+        }
 
-    .nested-comments {
-      margin-left: 2rem;
-      border-left: 2px solid #555;
-      padding-left: 1rem;
-      margin-top: 0.5rem;
-    }
+        /* Ocultar elementos por defecto */
+        .hidden {
+            display: none;
+        }
 
-    .hidden {
-      display: none;
-    }
+        .toggle-replies-button,
+        .toggle-comments-button {
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+            padding: 0;
+            text-align: left;
+            width: 100%;
+        }
 
-    .toggle-replies-button,
-    .toggle-comments-button {
-      background: none;
-      border: none;
-      color: var(--accent-color);
-      cursor: pointer;
-      font-size: 0.9rem;
-      margin-top: 0.5rem;
-      margin-bottom: 0.5rem;
-      padding: 0;
-      text-align: left;
-      width: 100%;
-    }
+        .like-dislike button {
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            cursor: pointer;
+            margin-right: 0.5rem;
+        }
 
-    .like-dislike button {
-      background: none;
-      border: none;
-      color: var(--accent-color);
-      cursor: pointer;
-      margin-right: 0.5rem;
-    }
+        .notification {
+            background-color: var(--button-bg);
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+        }
 
-    .notification {
-      background-color: var(--button-bg);
-      padding: 0.5rem;
-      margin-top: 0.5rem;
-    }
+        .edit-delete {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+        }
 
-    .edit-delete {
-      position: absolute;
-      top: 5px;
-      right: 5px;
-    }
+        .edit-delete button {
+            margin-left: 5px;
+            font-size: 0.8rem;
+        }
 
-    .edit-delete button {
-      margin-left: 5px;
-      font-size: 0.8rem;
-    }
+        .notification-icon {
+            position: relative;
+            margin-left: auto;
+            cursor: pointer;
+        }
 
-    .notification-icon {
-      position: relative;
-      margin-left: auto;
-      cursor: pointer;
-    }
+        .notification-icon span {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: red;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 5px;
+            font-size: 0.7rem;
+        }
 
-    .notification-icon span {
-      position: absolute;
-      top: -5px;
-      right: -5px;
-      background: red;
-      color: white;
-      border-radius: 50%;
-      padding: 2px 5px;
-      font-size: 0.7rem;
-    }
 
-    @media (max-width: 600px) {
-      nav {
-        flex-direction: column;
-      }
-    }
-  </style>
+        @media (max-width: 600px) {
+            nav {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 
 <body>
-  <header>
-    Comunibet
-  </header>
+    <header>
+        Comunibet
+    </header>
 
-  <nav id="main-menu" style="display: none;">
-    <button onclick="mostrarSeccion('foro')">Foro</button>
-    <button onclick="mostrarSeccion('publicar')">Publicar</button>
-    <button onclick="verPerfil(window.usuarioActual)">Mi Perfil</button>
-    <button onclick="mostrarNotificaciones()">Notificaciones</button>
-    <input type="text" placeholder="Buscar..." onchange="buscar(this.value)" />
-    <button onclick="toggleModo()">Modo Claro/Oscuro</button>
-    <button onclick="cerrarSesion()">Cerrar Sesión</button>
-  </nav>
+    <nav id="main-menu" style="display: none;">
+        <button onclick="mostrarSeccion('foro')">Foro</button>
+        <button onclick="mostrarSeccion('publicar')">Publicar</button>
+        <button onclick="verPerfil(window.usuarioActual)">Mi Perfil</button>
+        <button onclick="mostrarNotificaciones()">Notificaciones</button>
+        <input type="text" placeholder="Buscar..." onchange="buscar(this.value)">
+        <button onclick="toggleModo()">Modo Claro/Oscuro</button>
+        <button onclick="cerrarSesion()">Cerrar Sesión</button>
+    </nav>
 
-  <section id="auth-entry" class="section active">
-    <h2>Bienvenido a Comunibet</h2>
-    <div class="form-section">
-      <p>Por favor, inicia sesión para continuar.</p>
-      <button onclick="signInWithGoogle()" style="background-color: #DB4437; color: white;">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon"
-          style="width:20px; vertical-align: middle; margin-right: 10px;" />
-        Iniciar Sesión con Google
-      </button>
-    </div>
-  </section>
+    <section id="auth-entry" class="section active">
+        <h2>Bienvenido a Comunibet</h2>
+        <div class="form-section">
+            <p>Por favor, inicia sesión para continuar.</p>
+            <button onclick="signInWithGoogle()" style="background-color: #DB4437; color: white;">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon" style="width:20px; vertical-align: middle; margin-right: 10px;">
+                Iniciar Sesión con Google
+            </button>
+        </div>
+    </section>
 
-  <section id="selectUserName" class="section">
-    <h2>Elige tu Nombre de Usuario</h2>
-    <div class="form-section">
-      <p>Es tu primera vez. Por favor, elige un nombre de usuario único:</p>
-      <input type="text" id="chosenUserName" placeholder="Tu nombre de usuario (ej: JuanitoApuestas)" />
-      <p id="userNameError" style="color: red; display: none;">Este nombre de usuario ya está en uso o es inválido.</p>
-      <button onclick="saveChosenUserName()">Guardar Nombre de Usuario</button>
-    </div>
-  </section>
+    <section id="selectUserName" class="section">
+        <h2>Elige tu Nombre de Usuario</h2>
+        <div class="form-section">
+            <p>Es tu primera vez. Por favor, elige un nombre de usuario único:</p>
+            <input type="text" id="chosenUserName" placeholder="Tu nombre de usuario (ej: JuanitoApuestas)">
+            <p id="userNameError" style="color: red; display: none;">Este nombre de usuario ya está en uso o es inválido.</p>
+            <button onclick="saveChosenUserName()">Guardar Nombre de Usuario</button>
+        </div>
+    </section>
 
-  <section id="foro" class="section">
-    <h2>Foro de Apuestas</h2>
-    <div id="publicaciones"></div>
-  </section>
+    <section id="foro" class="section">
+        <h2>Foro de Apuestas</h2>
+        <div id="publicaciones">
+            </div>
+    </section>
 
-  <section id="publicar" class="section">
-    <h2>Nueva Publicación</h2>
-    <div class="form-section">
-      <input type="text" id="partido" placeholder="Partido (Ej: Barcelona vs Madrid)" />
-      <input type="text" id="apuesta" placeholder="Apuesta (Ej: Gana Barcelona - Cuota 1.80)" />
-      <input type="time" id="hora" />
-      <input type="date" id="fecha" />
-      <textarea id="comentario" placeholder="Comentario adicional..."></textarea>
-      <button onclick="publicar()">Publicar</button>
-    </div>
-  </section>
+    <section id="publicar" class="section">
+        <h2>Nueva Publicación</h2>
+        <div class="form-section">
+            <input type="text" id="partido" placeholder="Partido (Ej: Barcelona vs Madrid)">
+            <input type="text" id="apuesta" placeholder="Apuesta (Ej: Gana Barcelona - Cuota 1.80)">
+            <input type="time" id="hora">
+            <input type="date" id="fecha">
+            <textarea id="comentario" placeholder="Comentario adicional..."></textarea>
+            <button onclick="publicar()">Publicar</button>
+        </div>
+    </section>
 
-  <section id="perfil" class="section">
-    <h2 id="nombrePerfil">Mi Perfil</h2>
-    <h3>Seguidores: <span id="contadorSeguidores">0</span></h3>
-    <button id="btnSeguir" onclick="toggleSeguir()" style="display:none;">Seguir</button>
-    <hr />
-    <h3>Descripción:</h3>
-    <textarea id="descripcionPerfil" placeholder="Añade una descripción..." rows="5" readonly></textarea>
-    <button id="guardarDescripcionBtn" onclick="guardarDescripcion()" style="display:none;">Guardar Descripción</button>
-  </section>
+    <section id="perfil" class="section">
+        <h2 id="nombrePerfil">Mi Perfil</h2>
+        <h3>Seguidores: <span id="contadorSeguidores">0</span></h3>
+        <button id="btnSeguir" onclick="toggleSeguir()" style="display:none;">Seguir</button>
+        <hr>
+        <h3>Descripción:</h3>
+        <textarea id="descripcionPerfil" placeholder="Añade una descripción..." rows="5" readonly></textarea>
+        <button id="guardarDescripcionBtn" onclick="guardarDescripcion()" style="display:none;">Guardar Descripción</button>
+    </section>
 
-  <script type="module" defer>
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import {
-      getFirestore,
-      collection,
-      addDoc,
-      onSnapshot,
-      query,
-      orderBy,
-      deleteDoc,
-      doc,
-      updateDoc,
-      getDocs,
-      where,
-      arrayUnion,
-      arrayRemove,
-      setDoc,
-      getDoc,
-      serverTimestamp,
-    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-    import {
-      getAuth,
-      signOut,
-      onAuthStateChanged,
-      GoogleAuthProvider,
-      signInWithPopup,
-    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js";
+    <script type="module" defer>
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+        // Importamos getDoc para obtener un solo documento por ID
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc, getDocs, where, arrayUnion, arrayRemove, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+        import { getAuth, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyAs19oiYivfPYSCl_-xcOFeBQMziZSeBn0",
-      authDomain: "comunibetstudio.firebaseapp.com",
-      projectId: "comunibetstudio",
-      storageBucket: "comunibetstudio.firebasestorage.app",
-      messagingSenderId: "980411984792",
-      appId: "1:980411984792:web:c7ab103a9efe8e121e99ed",
-      measurementId: "G-P6EJLZRTVV",
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-    const analytics = getAnalytics(app);
-
-    window.usuarioActual = null;
-    window.usuarioAuthId = null;
-    window.perfilVisitadoUid = null;
-    window.likes = new Map();
-    let authUserGlobal = null;
-
-    async function getUserNameByUid(uid) {
-      if (!uid) return null;
-      const userDocRef = doc(db, "usuarios", uid);
-      const userDocSnap = await getDoc(userDocRef);
-      if (userDocSnap.exists() && userDocSnap.data().userName) {
-        return userDocSnap.data().userName;
-      }
-      return null;
-    }
-    window.getUserNameByUid = getUserNameByUid;
-
-    async function getUidByUserName(userName) {
-      if (!userName) return null;
-      const q = query(collection(db, "usuarios"), where("userName", "==", userName));
-      const querySnapshot = await getDocs(q);
-      if (!querySnapshot.empty) {
-        return querySnapshot.docs[0].data().uid;
-      }
-      return null;
-    }
-    window.getUidByUserName = getUidByUserName;
-
-    async function checkIfUserNameExists(username) {
-      const q = query(collection(db, "usuarios"), where("userName", "==", username));
-      const querySnapshot = await getDocs(q);
-      return !querySnapshot.empty;
-    }
-    window.checkIfUserNameExists = checkIfUserNameExists;
-
-    async function cargarDatosPerfilDeFirestore(uid) {
-      if (!uid) return { userName: "", descripcion: "", seguidores: [], siguiendo: [] };
-      const userDocRef = doc(db, "usuarios", uid);
-      const userDocSnap = await getDoc(userDocRef);
-      if (userDocSnap.exists()) {
-        const userData = userDocSnap.data();
-        return {
-          userName: userData.userName,
-          descripcion: userData.descripcion || "",
-          seguidores: userData.seguidores || [],
-          siguiendo: userData.siguiendo || [],
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAs19oiYivfPYSCl_-xcOFeBQMziZSeBn0", // TU API KEY INTEGRADA AQUÍ
+            authDomain: "comunibetstudio.firebaseapp.com",
+            projectId: "comunibetstudio",
+            storageBucket: "comunibetstudio.firebasestorage.app",
+            messagingSenderId: "980411984792",
+            appId: "1:980411984792:web:c7ab103a9efe8e121e99ed",
+            measurementId: "G-P6EJLZRTVV"
         };
-      }
-      return { userName: "", descripcion: "", seguidores: [], siguiendo: [] };
-    }
-    window.cargarDatosPerfilDeFirestore = cargarDatosPerfilDeFirestore;
 
-    function toggleModo() {
-      document.body.classList.toggle("light");
-    }
-
-    function mostrarSeccion(id) {
-      document.querySelectorAll(".section").forEach((s) => s.classList.remove("active"));
-      document.getElementById(id).classList.add("active");
-      if (id !== "auth-entry" && id !== "selectUserName") {
-        document.getElementById("auth-entry").style.display = "none";
-        document.getElementById("selectUserName").style.display = "none";
-        document.getElementById("main-menu").style.display = "flex";
-      } else {
-        document.getElementById("main-menu").style.display = "none";
-      }
-    }
-
-    async function verPerfil(nombre) {
-      const uidDelPerfil = await getUidByUserName(nombre);
-      if (!uidDelPerfil) {
-        alert(`No se encontró el perfil de ${nombre}.`);
-        return;
-      }
-      window.perfilVisitadoUid = uidDelPerfil;
-      const datosPerfil = await cargarDatosPerfilDeFirestore(uidDelPerfil);
-
-      document.getElementById("nombrePerfil").textContent = datosPerfil.userName;
-      document.getElementById("descripcionPerfil").value = datosPerfil.descripcion;
-      document.getElementById("contadorSeguidores").textContent = datosPerfil.seguidores.length;
-
-      const btnSeguir = document.getElementById("btnSeguir");
-      const descripcionInput = document.getElementById("descripcionPerfil");
-      const guardarDescripcionBtn = document.getElementById("guardarDescripcionBtn");
-
-      if (uidDelPerfil === window.usuarioAuthId) {
-        btnSeguir.style.display = "none";
-        descripcionInput.readOnly = false;
-        guardarDescripcionBtn.style.display = "inline-block";
-      } else {
-        btnSeguir.style.display = "inline-block";
-        descripcionInput.readOnly = true;
-        guardarDescripcionBtn.style.display = "none";
-
-        if (window.usuarioAuthId && datosPerfil.seguidores.includes(window.usuarioAuthId)) {
-          btnSeguir.textContent = "Siguiendo";
-        } else {
-          btnSeguir.textContent = "Seguir";
-        }
-      }
-
-      mostrarSeccion("perfil");
-    }
-
-    function mostrarNotificaciones() {
-      alert("No tienes nuevas notificaciones.");
-    }
-
-    function buscar(valor) {
-      alert("Buscando: " + valor);
-    }
-
-    async function guardarDescripcion() {
-      if (!window.usuarioAuthId || window.perfilVisitadoUid !== window.usuarioAuthId) {
-        alert("Solo puedes editar tu propia descripción.");
-        return;
-      }
-
-      const nuevaDescripcion = document.getElementById("descripcionPerfil").value;
-      try {
-        const userDocRef = doc(db, "usuarios", window.usuarioAuthId);
-        await updateDoc(userDocRef, {
-          descripcion: nuevaDescripcion,
-        });
-        alert("Descripción guardada.");
-      } catch (e) {
-        console.error("Error al guardar descripción:", e);
-        alert("Hubo un error al guardar la descripción.");
-      }
-    }
-
-    async function toggleSeguir() {
-      if (!window.usuarioAuthId) {
-        alert("Debes iniciar sesión para seguir a otros usuarios.");
-        return;
-      }
-      if (window.perfilVisitadoUid === window.usuarioAuthId) {
-        alert("No puedes seguirte a ti mismo.");
-        return;
-      }
-      if (!window.perfilVisitadoUid) {
-        alert("No hay un perfil válido seleccionado para seguir.");
-        return;
-      }
-
-      const btn = document.getElementById("btnSeguir");
-      const contadorSeguidores = document.getElementById("contadorSeguidores");
-
-      try {
-        const miUsuarioDocRef = doc(db, "usuarios", window.usuarioAuthId);
-        const otroUsuarioDocRef = doc(db, "usuarios", window.perfilVisitadoUid);
-
-        const miUsuarioSnapshot = await getDoc(miUsuarioDocRef);
-        const otroUsuarioSnapshot = await getDoc(otroUsuarioDocRef);
-
-        if (!miUsuarioSnapshot.exists()) {
-          console.error("Documento de usuario actual no encontrado en Firestore.");
-          alert("Error: Tu perfil no se encontró para actualizar el seguimiento.");
-          return;
-        }
-        if (!otroUsuarioSnapshot.exists()) {
-          console.error("Documento del otro usuario no encontrado en Firestore.");
-          alert("Error: El perfil que intentas seguir no se encontró.");
-          return;
-        }
-
-        if (btn.textContent === "Seguir") {
-          await updateDoc(miUsuarioDocRef, {
-            siguiendo: arrayUnion(window.perfilVisitadoUid),
-          });
-          await updateDoc(otroUsuarioDocRef, {
-            seguidores: arrayUnion(window.usuarioAuthId),
-          });
-          btn.textContent = "Siguiendo";
-          contadorSeguidores.textContent = parseInt(contadorSeguidores.textContent) + 1;
-        } else {
-          await updateDoc(miUsuarioDocRef, {
-            siguiendo: arrayRemove(window.perfilVisitadoUid),
-          });
-          await updateDoc(otroUsuarioDocRef, {
-            seguidores: arrayRemove(window.usuarioAuthId),
-          });
-          btn.textContent = "Seguir";
-          contadorSeguidores.textContent = parseInt(contadorSeguidores.textContent) - 1;
-        }
-      } catch (e) {
-        console.error("Error al seguir/dejar de seguir:", e);
-        alert("Hubo un error al actualizar la relación de seguimiento. Revisa la consola para más detalles.");
-      }
-    }
-
-    async function signInWithGoogle() {
-      const provider = new GoogleAuthProvider();
-      try {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-        console.log("DEBUG: Inicio de sesión con Google exitoso. UID:", user.uid);
-      } catch (error) {
-        console.error("Error al iniciar sesión con Google:", error);
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        if (errorCode === "auth/popup-closed-by-user") {
-        } else if (errorCode === "auth/cancelled-popup-request") {
-        } else if (errorCode === "auth/account-exists-with-different-credential") {
-          alert("Ya existe una cuenta con este correo electrónico usando otro método de inicio de sesión.");
-        } else {
-          alert(`Error al iniciar sesión con Google: ${errorMessage}`);
-        }
-      }
-    }
-
-    async function saveChosenUserName() {
-      const chosenUserNameInput = document.getElementById("chosenUserName");
-      const userNameErrorDiv = document.getElementById("userNameError");
-      const userName = chosenUserNameInput.value.trim();
-
-      userNameErrorDiv.style.display = "none";
-
-      if (!userName) {
-        userNameErrorDiv.textContent = "El nombre de usuario no puede estar vacío.";
-        userNameErrorDiv.style.display = "block";
-        return;
-      }
-      if (userName.length < 3 || userName.length > 20) {
-        userNameErrorDiv.textContent = "El nombre de usuario debe tener entre 3 y 20 caracteres.";
-        userNameErrorDiv.style.display = "block";
-        return;
-      }
-      if (!/^[a-zA-Z0-9_]+$/.test(userName)) {
-        userNameErrorDiv.textContent = "El nombre de usuario solo puede contener letras, números y guiones bajos.";
-        userNameErrorDiv.style.display = "block";
-        return;
-      }
-
-      if (!authUserGlobal) {
-        alert("Error: No hay un usuario autenticado para asignar el nombre de usuario.");
-        signOut(auth);
-        return;
-      }
-
-      const userUid = authUserGlobal.uid;
-
-      try {
-        const usernameExists = await checkIfUserNameExists(userName);
-        if (usernameExists) {
-          userNameErrorDiv.textContent = "Este nombre de usuario ya está en uso. Por favor, elige otro.";
-          userNameErrorDiv.style.display = "block";
-          return;
-        }
-
-        const userDocRef = doc(db, "usuarios", userUid);
-        await setDoc(
-          userDocRef,
-          {
-            uid: userUid,
-            userName,
-            email: authUserGlobal.email,
-            createdAt: serverTimestamp(),
-            descripcion: "",
-            seguidores: [],
-            siguiendo: [],
-          },
-          { merge: true } // <- merge para evitar conflictos
-        );
-
-        console.log("Nombre de usuario guardado para UID:", userUid, "Nombre:", userName);
-        alert("¡Bienvenido! Tu nombre de usuario ha sido guardado.");
-        mostrarSeccion("foro");
-        document.getElementById("main-menu").style.display = "flex";
-        chosenUserNameInput.value = "";
-      } catch (e) {
-        console.error("Error al guardar el nombre de usuario:", e);
-        userNameErrorDiv.textContent = `Error al guardar: ${e.message}. Inténtalo de nuevo.`;
-        userNameErrorDiv.style.display = "block";
-      }
-    }
-
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        console.log("onAuthStateChanged: Usuario autenticado. UID:", user.uid);
-        authUserGlobal = user;
-        window.usuarioAuthId = user.uid;
-
-        const userDocRef = doc(db, "usuarios", user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-
-        if (userDocSnap.exists() && userDocSnap.data().userName) {
-          window.usuarioActual = userDocSnap.data().userName;
-          window.perfilVisitadoUid = user.uid;
-
-          mostrarSeccion("foro");
-          document.getElementById("main-menu").style.display = "flex";
-
-          const myProfileData = await cargarDatosPerfilDeFirestore(user.uid);
-          document.getElementById("nombrePerfil").textContent = myProfileData.userName;
-          document.getElementById("descripcionPerfil").value = myProfileData.descripcion;
-          document.getElementById("contadorSeguidores").textContent = myProfileData.seguidores.length;
-
-          document.getElementById("btnSeguir").style.display = "none";
-          document.getElementById("descripcionPerfil").readOnly = false;
-          document.getElementById("guardarDescripcionBtn").style.display = "inline-block";
-
-          cargarPublicaciones();
-        } else {
-          console.log("Usuario Google autenticado pero sin userName en Firestore. Mostrar selección de nombre.");
-          mostrarSeccion("selectUserName");
-          document.getElementById("main-menu").style.display = "none";
-        }
-      } else {
-        console.log("onAuthStateChanged: No hay usuario autenticado.");
-        window.usuarioActual = null;
-        window.usuarioAuthId = null;
-        window.perfilVisitadoUid = null;
-        authUserGlobal = null;
-
-        document.querySelectorAll(".section").forEach((s) => s.classList.remove("active"));
-        document.getElementById("auth-entry").classList.add("active");
-        document.getElementById("auth-entry").style.display = "block";
-        document.getElementById("selectUserName").style.display = "none";
-        document.getElementById("main-menu").style.display = "none";
-      }
-    });
-
-    function cerrarSesion() {
-      signOut(auth)
-        .then(() => {
-          alert("Sesión cerrada.");
-        })
-        .catch((error) => {
-          console.error("Error al cerrar sesión:", error);
-          alert("Error al cerrar sesión.");
-        });
-    }
-
-    function crearElementoComentario(texto, autor, likes = 0, dislikes = 0) {
-      const div = document.createElement("div");
-      div.className = "comment";
-      div.innerHTML = `
-        <strong>${autor}</strong>: ${texto}
-        <div class='like-dislike'>
-          <button onclick="darLikeDislike(this, 'like')">👍 <span>${likes}</span></button>
-          <button onclick="darLikeDislike(this, 'dislike')">👎 <span>${dislikes}</span></button>
-        </div>
-        <div class='comment-input-area'>
-          <textarea placeholder='Escribe una respuesta...'></textarea>
-          <button onclick='comentar(this)'>Responder</button>
-        </div>
-        <button class="toggle-replies-button" onclick="toggleRespuestas(this)" style="display:none;">Mostrar respuestas (0)</button>
-        <div class='nested-comments hidden'></div>
-      `;
-      return div;
-    }
-
-    async function publicar() {
-      if (!window.usuarioActual) {
-        alert("Debes iniciar sesión para publicar.");
-        return;
-      }
-
-      const partido = document.getElementById("partido").value;
-      const apuesta = document.getElementById("apuesta").value;
-      const hora = document.getElementById("hora").value;
-      const fecha = document.getElementById("fecha").value;
-      const comentario = document.getElementById("comentario").value;
-
-      if (!partido || !apuesta || !hora || !fecha || !comentario) {
-        alert("Por favor, completa todos los campos de la publicación.");
-        return;
-      }
-
-      try {
-        await addDoc(collection(db, "publicaciones"), {
-          autor: window.usuarioActual,
-          autorUid: window.usuarioAuthId,
-          partido,
-          apuesta,
-          hora,
-          fecha,
-          comentario,
-          likes: 0,
-          dislikes: 0,
-          timestamp: serverTimestamp(),
-        });
-
-        document.getElementById("partido").value = "";
-        document.getElementById("apuesta").value = "";
-        document.getElementById("hora").value = "";
-        document.getElementById("fecha").value = "";
-        document.getElementById("comentario").value = "";
-      } catch (e) {
-        console.error("Error al añadir publicación a Firestore: ", e);
-        alert("Hubo un error al publicar. Inténtalo de nuevo.");
-      }
-    }
-
-    async function comentar(btn) {
-      if (!window.usuarioActual) {
-        alert("Debes iniciar sesión para comentar.");
-        return;
-      }
-
-      const texto = btn.previousElementSibling.value;
-      if (!texto) return;
-
-      const postElement = btn.closest(".post");
-      const postId = postElement.dataset.id;
-
-      if (!postId) {
-        console.error("No se encontró el ID de la publicación para el comentario.");
-        alert("No se pudo asociar el comentario a una publicación.");
-        return;
-      }
-
-      try {
-        await addDoc(collection(db, "publicaciones", postId, "comentarios"), {
-          autor: window.usuarioActual,
-          autorUid: window.usuarioAuthId,
-          texto,
-          likes: 0,
-          dislikes: 0,
-          timestamp: serverTimestamp(),
-        });
-        btn.previousElementSibling.value = "";
-      } catch (e) {
-        console.error("Error al añadir comentario a Firestore: ", e);
-        alert("Hubo un error al comentar. Inténtalo de nuevo.");
-      }
-    }
-
-    async function darLikeDislike(btn, tipo) {
-      if (!window.usuarioActual) {
-        alert("Debes iniciar sesión para dar 'Me gusta' o 'No me gusta'.");
-        return;
-      }
-
-      const elemento = btn.closest(".post, .comment");
-      if (!elemento) return;
-
-      const elementoId = elemento.dataset.id;
-      if (!elementoId) {
-        console.error("ID del elemento no encontrado para like/dislike.");
-        return;
-      }
-
-      const isPost = elemento.classList.contains("post");
-      const isComment = elemento.classList.contains("comment");
-
-      const key = `${window.usuarioAuthId}_${elementoId}`;
-      const estadoPrevio = window.likes.get(key);
-
-      let currentLikes = parseInt(
-        elemento.querySelector("[onclick*=\"darLikeDislike(this, 'like')\"] span").textContent
-      );
-      let currentDislikes = parseInt(
-        elemento.querySelector("[onclick*=\"darLikeDislike(this, 'dislike')\"] span").textContent
-      );
-
-      let newLikes = currentLikes;
-      let newDislikes = currentDislikes;
-
-      if (estadoPrevio === tipo) {
-        window.likes.delete(key);
-        if (tipo === "like") {
-          newLikes--;
-        } else {
-          newDislikes--;
-        }
-      } else {
-        if (estadoPrevio === "like") {
-          newLikes--;
-        } else if (estadoPrevio === "dislike") {
-          newDislikes--;
-        }
-        window.likes.set(key, tipo);
-        if (tipo === "like") {
-          newLikes++;
-        } else {
-          newDislikes++;
-        }
-      }
-
-      try {
-        if (isPost) {
-          const postRef = doc(db, "publicaciones", elementoId);
-          await updateDoc(postRef, { likes: newLikes, dislikes: newDislikes });
-        } else if (isComment) {
-          const postId = elemento.closest(".post").dataset.id;
-          const commentRef = doc(db, "publicaciones", postId, "comentarios", elementoId);
-          await updateDoc(commentRef, { likes: newLikes, dislikes: newDislikes });
-        }
-      } catch (e) {
-        console.error("Error al actualizar likes/dislikes en Firestore:", e);
-        alert("Hubo un error al procesar tu like/dislike. Inténtalo de nuevo.");
-        if (estadoPrevio) {
-          window.likes.set(key, estadoPrevio);
-        } else {
-          window.likes.delete(key);
-        }
-      }
-    }
-
-    async function borrar(btn) {
-      if (!window.usuarioActual) {
-        alert("Debes iniciar sesión para borrar.");
-        return;
-      }
-
-      const post = btn.closest(".post");
-      const postId = post.dataset.id;
-      const autorUidPublicacion = post.dataset.autorUid;
-
-      if (autorUidPublicacion !== window.usuarioAuthId) {
-        alert("Solo puedes borrar tus propias publicaciones.");
-        return;
-      }
-
-      if (confirm("¿Estás seguro de que quieres borrar esta publicación y todos sus comentarios?")) {
-        try {
-          await deleteDoc(doc(db, "publicaciones", postId));
-          console.log("Publicación borrada con éxito de Firestore.");
-        } catch (e) {
-          console.error("Error al borrar publicación de Firestore:", e);
-          alert("Hubo un error al borrar la publicación. Inténtalo de nuevo.");
-        }
-      }
-    }
-
-    function cargarPublicaciones() {
-      const publicacionesDiv = document.getElementById("publicaciones");
-      publicacionesDiv.innerHTML = "";
-
-      const qPub = query(collection(db, "publicaciones"), orderBy("timestamp", "desc"));
-
-      onSnapshot(
-        qPub,
-        (snapshot) => {
-          publicacionesDiv.innerHTML = "";
-          snapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            const postId = docSnap.id;
-
-            const div = document.createElement("div");
-            div.className = "post";
-            div.dataset.id = postId;
-            div.dataset.autorUid = data.autorUid;
-
-            div.innerHTML = `
-              <strong onclick="verPerfil('${data.autor}')" style="cursor:pointer;color:var(--accent-color)">${data.autor}</strong>: ${data.partido} - ${data.apuesta}<br>${data.fecha} ${data.hora}<br>${data.comentario}
-              <div class='like-dislike'>
-                <button onclick="darLikeDislike(this, 'like')">👍 <span>${data.likes || 0}</span></button>
-                <button onclick="darLikeDislike(this, 'dislike')">👎 <span>${data.dislikes || 0}</span></button>
-              </div>
-              <div class='comment-section'>
-                <textarea placeholder='Escribe un comentario...'></textarea>
-                <button onclick='comentar(this)'>Comentar</button>
-                <button class="toggle-comments-button" onclick="toggleComentariosPrincipales(this)">Mostrar comentarios (0)</button>
-                <div class='main-comments hidden'></div>
-              </div>
-              <div class='edit-delete'>
-                ${window.usuarioAuthId === data.autorUid ? `<button onclick='borrar(this)'>🗑️</button>` : ""}
-              </div>
-            `;
-            publicacionesDiv.appendChild(div);
-
-            cargarComentarios(
-              postId,
-              div.querySelector(".main-comments"),
-              div.querySelector(".toggle-comments-button")
-            );
-          });
-        },
-        (error) => {
-          console.error("Error al cargar publicaciones:", error);
-        }
-      );
-    }
-
-    function cargarComentarios(postId, commentsContainer, toggleButton) {
-      const qComments = query(
-        collection(db, "publicaciones", postId, "comentarios"),
-        orderBy("timestamp", "asc")
-      );
-
-      onSnapshot(
-        qComments,
-        (snapshot) => {
-          commentsContainer.innerHTML = "";
-          snapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            const commentId = docSnap.id;
-
-            const div = crearElementoComentario(
-              data.texto,
-              data.autor,
-              data.likes || 0,
-              data.dislikes || 0
-            );
-            div.dataset.id = commentId;
-            commentsContainer.appendChild(div);
-          });
-
-          const numComments = commentsContainer.children.length;
-          if (numComments > 0) {
-            toggleButton.style.display = "block";
-            if (commentsContainer.classList.contains("hidden")) {
-              toggleButton.textContent = `Mostrar comentarios (${numComments})`;
-            } else {
-              toggleButton.textContent = `Ocultar comentarios (${numComments})`;
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const analytics = getAnalytics(app);
+
+        // ** Variables globales para el estado del usuario y el perfil visitado **
+        window.usuarioActual = null; // Nombre de usuario del que está logueado
+        window.usuarioAuthId = null; // UID del que está logueado
+        window.perfilVisitadoUid = null; // UID del perfil que se está viendo actualmente
+        window.likes = new Map();
+        let authUserGlobal = null; // Variable para mantener el objeto user de Firebase Auth
+
+        // Función auxiliar para obtener el nombre de usuario por UID
+        async function getUserNameByUid(uid) {
+            if (!uid) return null;
+            const userDocRef = doc(db, "usuarios", uid);
+            const userDocSnap = await getDoc(userDocRef);
+            if (userDocSnap.exists() && userDocSnap.data().userName) {
+                return userDocSnap.data().userName;
             }
-          } else {
-            toggleButton.style.display = "none";
-          }
-        },
-        (error) => {
-          console.error("Error al cargar comentarios:", error);
+            return null;
         }
-      );
-    }
+        window.getUserNameByUid = getUserNameByUid;
 
-    function toggleComentariosPrincipales(btn) {
-      const post = btn.closest(".post");
-      const mainCommentsDiv = post.querySelector(".main-comments");
-      if (mainCommentsDiv.classList.contains("hidden")) {
-        mainCommentsDiv.classList.remove("hidden");
-        btn.textContent = `Ocultar comentarios (${mainCommentsDiv.children.length})`;
-      } else {
-        mainCommentsDiv.classList.add("hidden");
-        btn.textContent = `Mostrar comentarios (${mainCommentsDiv.children.length})`;
-      }
-    }
+        // Función auxiliar para obtener el UID por nombre de usuario
+        async function getUidByUserName(userName) {
+            if (!userName) return null;
+            const q = query(collection(db, "usuarios"), where("userName", "==", userName));
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+                return querySnapshot.docs[0].data().uid;
+            }
+            return null;
+        }
+        window.getUidByUserName = getUidByUserName;
 
-    function toggleRespuestas(btn) {
-      const comment = btn.closest(".comment");
-      const nestedCommentsDiv = comment.querySelector(".nested-comments");
-      if (nestedCommentsDiv.classList.contains("hidden")) {
-        nestedCommentsDiv.classList.remove("hidden");
-        btn.textContent = `Ocultar respuestas (${nestedCommentsDiv.children.length})`;
-      } else {
-        nestedCommentsDiv.classList.add("hidden");
-        btn.textContent = `Mostrar respuestas (${nestedCommentsDiv.children.length})`;
-      }
-    }
+        // Función auxiliar para verificar si un nombre de usuario existe
+        async function checkIfUserNameExists(username) {
+            const q = query(collection(db, "usuarios"), where("userName", "==", username));
+            const querySnapshot = await getDocs(q);
+            return !querySnapshot.empty;
+        }
+        window.checkIfUserNameExists = checkIfUserNameExists;
 
-    window.toggleModo = toggleModo;
-    window.mostrarSeccion = mostrarSeccion;
-    window.verPerfil = verPerfil;
-    window.mostrarNotificaciones = mostrarNotificaciones;
-    window.buscar = buscar;
-    window.guardarDescripcion = guardarDescripcion;
-    window.toggleSeguir = toggleSeguir;
-    window.signInWithGoogle = signInWithGoogle;
-    window.saveChosenUserName = saveChosenUserName;
-    window.cerrarSesion = cerrarSesion;
-    window.publicar = publicar;
-    window.comentar = comentar;
-    window.darLikeDislike = darLikeDislike;
-    window.borrar = borrar;
-    window.toggleComentariosPrincipales = toggleComentariosPrincipales;
-    window.toggleRespuestas = toggleRespuestas;
-    window.cargarPublicaciones = cargarPublicaciones;
-  </script>
+        // Nueva función para cargar los datos del perfil de un UID específico
+        async function cargarDatosPerfilDeFirestore(uid) {
+            if (!uid) return { userName: '', descripcion: '', seguidores: [], siguiendo: [] };
+            const userDocRef = doc(db, "usuarios", uid);
+            const userDocSnap = await getDoc(userDocRef);
+            if (userDocSnap.exists()) {
+                const userData = userDocSnap.data();
+                return {
+                    userName: userData.userName,
+                    descripcion: userData.descripcion || '',
+                    seguidores: userData.seguidores || [],
+                    siguiendo: userData.siguiendo || []
+                };
+            }
+            return { userName: '', descripcion: '', seguidores: [], siguiendo: [] };
+        }
+        window.cargarDatosPerfilDeFirestore = cargarDatosPerfilDeFirestore;
+
+        // ** Funciones de UI y Lógica (usan las variables globales) **
+        function toggleModo() {
+            document.body.classList.toggle('light');
+        }
+
+        // Función general para mostrar secciones, con un manejo especial para la pantalla de inicio
+        function mostrarSeccion(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            // Oculta todas las secciones de autenticación/registro si se muestra una sección principal
+            if (id !== 'auth-entry' && id !== 'selectUserName') {
+                document.getElementById('auth-entry').style.display = 'none';
+                document.getElementById('selectUserName').style.display = 'none';
+                document.getElementById('main-menu').style.display = 'flex';
+            } else {
+                document.getElementById('main-menu').style.display = 'none';
+            }
+        }
+
+        async function verPerfil(nombre) {
+            const uidDelPerfil = await getUidByUserName(nombre);
+
+            if (!uidDelPerfil) {
+                alert(`No se encontró el perfil de ${nombre}.`);
+                return;
+            }
+
+            window.perfilVisitadoUid = uidDelPerfil;
+
+            const datosPerfil = await cargarDatosPerfilDeFirestore(uidDelPerfil);
+
+            document.getElementById('nombrePerfil').textContent = datosPerfil.userName;
+            document.getElementById('descripcionPerfil').value = datosPerfil.descripcion;
+            document.getElementById('contadorSeguidores').textContent = datosPerfil.seguidores.length;
+
+            const btnSeguir = document.getElementById('btnSeguir');
+            const descripcionInput = document.getElementById('descripcionPerfil');
+            const guardarDescripcionBtn = document.getElementById('guardarDescripcionBtn');
+
+
+            if (uidDelPerfil === window.usuarioAuthId) {
+                btnSeguir.style.display = 'none';
+                descripcionInput.readOnly = false;
+                guardarDescripcionBtn.style.display = 'inline-block';
+            } else {
+                btnSeguir.style.display = 'inline-block';
+                descripcionInput.readOnly = true;
+                guardarDescripcionBtn.style.display = 'none';
+
+                if (window.usuarioAuthId && datosPerfil.seguidores.includes(window.usuarioAuthId)) {
+                    btnSeguir.textContent = "Siguiendo";
+                } else {
+                    btnSeguir.textContent = "Seguir";
+                }
+            }
+
+            mostrarSeccion('perfil');
+        }
+
+        function mostrarNotificaciones() {
+            alert("No tienes nuevas notificaciones.");
+        }
+
+        function buscar(valor) {
+            alert("Buscando: " + valor);
+        }
+
+        async function guardarDescripcion() {
+            if (!window.usuarioAuthId || window.perfilVisitadoUid !== window.usuarioAuthId) {
+                alert("Solo puedes editar tu propia descripción.");
+                return;
+            }
+
+            const nuevaDescripcion = document.getElementById('descripcionPerfil').value;
+            try {
+                const userDocRef = doc(db, "usuarios", window.usuarioAuthId);
+                await updateDoc(userDocRef, {
+                    descripcion: nuevaDescripcion
+                });
+                alert("Descripción guardada.");
+            } catch (e) {
+                console.error("Error al guardar descripción:", e);
+                alert("Hubo un error al guardar la descripción.");
+            }
+        }
+
+        async function toggleSeguir() {
+            if (!window.usuarioAuthId) {
+                alert("Debes iniciar sesión para seguir a otros usuarios.");
+                return;
+            }
+            if (window.perfilVisitadoUid === window.usuarioAuthId) {
+                alert("No puedes seguirte a ti mismo.");
+                return;
+            }
+            if (!window.perfilVisitadoUid) {
+                alert("No hay un perfil válido seleccionado para seguir.");
+                return;
+            }
+
+            const btn = document.getElementById("btnSeguir");
+            const contadorSeguidores = document.getElementById("contadorSeguidores");
+
+            try {
+                const miUsuarioDocRef = doc(db, "usuarios", window.usuarioAuthId);
+                const otroUsuarioDocRef = doc(db, "usuarios", window.perfilVisitadoUid);
+
+                const miUsuarioSnapshot = await getDoc(miUsuarioDocRef);
+                const otroUsuarioSnapshot = await getDoc(otroUsuarioDocRef);
+
+                if (!miUsuarioSnapshot.exists()) {
+                    console.error("Documento de usuario actual no encontrado en Firestore.");
+                    alert("Error: Tu perfil no se encontró para actualizar el seguimiento.");
+                    return;
+                }
+                if (!otroUsuarioSnapshot.exists()) {
+                    console.error("Documento del otro usuario no encontrado en Firestore.");
+                    alert("Error: El perfil que intentas seguir no se encontró.");
+                    return;
+                }
+
+                if (btn.textContent === "Seguir") {
+                    await updateDoc(miUsuarioDocRef, {
+                        siguiendo: arrayUnion(window.perfilVisitadoUid)
+                    });
+                    await updateDoc(otroUsuarioDocRef, {
+                        seguidores: arrayUnion(window.usuarioAuthId)
+                    });
+                    btn.textContent = "Siguiendo";
+                    contadorSeguidores.textContent = parseInt(contadorSeguidores.textContent) + 1;
+                } else {
+                    await updateDoc(miUsuarioDocRef, {
+                        siguiendo: arrayRemove(window.perfilVisitadoUid)
+                    });
+                    await updateDoc(otroUsuarioDocRef, {
+                        seguidores: arrayRemove(window.usuarioAuthId)
+                    });
+                    btn.textContent = "Seguir";
+                    contadorSeguidores.textContent = parseInt(contadorSeguidores.textContent) - 1;
+                }
+            } catch (e) {
+                console.error("Error al seguir/dejar de seguir:", e);
+                alert("Hubo un error al actualizar la relación de seguimiento. Revisa la consola para más detalles.");
+            }
+        }
+
+
+        // ** LÓGICA DE AUTENTICACIÓN Y ESTADO DE USUARIO **
+
+        // Función para manejar el inicio de sesión con Google
+        async function signInWithGoogle() {
+            const provider = new GoogleAuthProvider();
+            try {
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+                console.log("DEBUG: Inicio de sesión con Google exitoso. UID:", user.uid);
+
+                // Forzar actualización UI inmediata sin recargar:
+                authUserGlobal = user;
+                window.usuarioAuthId = user.uid;
+
+                // Intentar cargar perfil (si existe) y la UI
+                const userDocRef = doc(db, "usuarios", user.uid);
+                const userDocSnap = await getDoc(userDocRef);
+                if (userDocSnap.exists() && userDocSnap.data().userName) {
+                    window.usuarioActual = userDocSnap.data().userName;
+                    window.perfilVisitadoUid = user.uid;
+                    mostrarSeccion('foro');
+                    document.getElementById('main-menu').style.display = 'flex';
+                    const myProfileData = await cargarDatosPerfilDeFirestore(user.uid);
+                    document.getElementById('nombrePerfil').textContent = myProfileData.userName;
+                    document.getElementById('descripcionPerfil').value = myProfileData.descripcion;
+                    document.getElementById('contadorSeguidores').textContent = myProfileData.seguidores.length;
+                    cargarPublicaciones();
+                } else {
+                    // Si no existe perfil aún, mostrar selector de nombre
+                    mostrarSeccion('selectUserName');
+                    document.getElementById('main-menu').style.display = 'none';
+                }
+
+            } catch (error) {
+                console.error("Error al iniciar sesión con Google:", error);
+                const errorCode = error.code;
+                const errorMessage = error.message;
+                if (errorCode === 'auth/popup-closed-by-user') {
+                    // El usuario cerró la ventana de pop-up
+                } else if (errorCode === 'auth/cancelled-popup-request') {
+                    // Ya hay una operación de pop-up en curso
+                } else if (errorCode === 'auth/account-exists-with-different-credential') {
+                    alert("Ya existe una cuenta con este correo electrónico usando otro método de inicio de sesión.");
+                } else {
+                    alert(`Error al iniciar sesión con Google: ${errorMessage}`);
+                }
+            }
+        }
+
+        // Función para guardar el nombre de usuario elegido por un nuevo usuario de Google
+        async function saveChosenUserName() {
+            const chosenUserNameInput = document.getElementById('chosenUserName');
+            const userNameErrorDiv = document.getElementById('userNameError');
+            const userName = chosenUserNameInput.value.trim();
+
+            userNameErrorDiv.style.display = 'none'; // Ocultar errores previos
+
+            if (!userName) {
+                userNameErrorDiv.textContent = "El nombre de usuario no puede estar vacío.";
+                userNameErrorDiv.style.display = 'block';
+                return;
+            }
+            if (userName.length < 3 || userName.length > 20) {
+                userNameErrorDiv.textContent = "El nombre de usuario debe tener entre 3 y 20 caracteres.";
+                userNameErrorDiv.style.display = 'block';
+                return;
+            }
+            if (!/^[a-zA-Z0-9_]+$/.test(userName)) {
+                userNameErrorDiv.textContent = "El nombre de usuario solo puede contener letras, números y guiones bajos.";
+                userNameErrorDiv.style.display = 'block';
+                return;
+            }
+
+
+            if (!authUserGlobal) {
+                alert("Error: No hay un usuario autenticado para asignar el nombre de usuario.");
+                // Forzar un cierre de sesión para intentar de nuevo
+                signOut(auth);
+                return;
+            }
+
+            const userUid = authUserGlobal.uid;
+
+            try {
+                const usernameExists = await checkIfUserNameExists(userName);
+                if (usernameExists) {
+                    userNameErrorDiv.textContent = "Este nombre de usuario ya está en uso. Por favor, elige otro.";
+                    userNameErrorDiv.style.display = 'block';
+                    return;
+                }
+
+                // Crear el documento del usuario en Firestore con el nombre de usuario elegido
+                const userDocRef = doc(db, "usuarios", userUid);
+                await setDoc(userDocRef, {
+                    uid: userUid,
+                    userName: userName,
+                    email: authUserGlobal.email,
+                    createdAt: serverTimestamp(),
+                    descripcion: '',
+                    seguidores: [],
+                    siguiendo: []
+                }, { merge: true }); // <-- merge para evitar conflictos create/update
+
+                console.log("Nombre de usuario guardado exitosamente para UID:", userUid, "Nombre:", userName);
+                alert("¡Bienvenido! Tu nombre de usuario ha sido guardado.");
+
+                // actualizar variables y UI
+                window.usuarioActual = userName;
+                window.perfilVisitadoUid = userUid;
+                document.getElementById('main-menu').style.display = 'flex';
+                mostrarSeccion('foro');
+
+                // Cargar publicaciones ahora que el usuario tiene perfil
+                cargarPublicaciones();
+
+                // Limpiar el campo
+                chosenUserNameInput.value = '';
+
+            } catch (e) {
+                console.error("Error al guardar el nombre de usuario:", e);
+                userNameErrorDiv.textContent = `Error al guardar: ${e.message}. Inténtalo de nuevo.`;
+                userNameErrorDiv.style.display = 'block';
+            }
+        }
+
+
+        // Escucha cambios en el estado de autenticación de Firebase
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                console.log("onAuthStateChanged: Usuario autenticado. UID:", user.uid);
+                authUserGlobal = user; // Almacena el objeto user en la variable global
+                window.usuarioAuthId = user.uid; // Actualiza la variable global
+
+                // Verificar si el usuario ya tiene un documento de perfil en Firestore
+                const userDocRef = doc(db, "usuarios", user.uid);
+                const userDocSnap = await getDoc(userDocRef);
+
+                if (userDocSnap.exists() && userDocSnap.data().userName) {
+                    // El usuario ya tiene un perfil completo con nombre de usuario
+                    window.usuarioActual = userDocSnap.data().userName;
+                    window.perfilVisitadoUid = user.uid;
+
+                    mostrarSeccion('foro');
+                    document.getElementById('main-menu').style.display = 'flex';
+
+                    const myProfileData = await cargarDatosPerfilDeFirestore(user.uid);
+                    document.getElementById('nombrePerfil').textContent = myProfileData.userName;
+                    document.getElementById('descripcionPerfil').value = myProfileData.descripcion;
+                    document.getElementById('contadorSeguidores').textContent = myProfileData.seguidores.length;
+
+                    document.getElementById('btnSeguir').style.display = 'none';
+                    document.getElementById('descripcionPerfil').readOnly = false;
+                    document.getElementById('guardarDescripcionBtn').style.display = 'inline-block';
+
+                    cargarPublicaciones();
+                } else {
+                    // El usuario está autenticado con Google, pero no tiene un nombre de usuario en Firestore
+                    console.log("Usuario de Google autenticado pero sin nombre de usuario en Firestore. Mostrando selección de nombre.");
+                    mostrarSeccion('selectUserName'); // Dirige a la pantalla para elegir nombre de usuario
+                    document.getElementById('main-menu').style.display = 'none';
+                }
+            } else {
+                console.log("onAuthStateChanged: No hay usuario autenticado.");
+                window.usuarioActual = null;
+                window.usuarioAuthId = null;
+                window.perfilVisitadoUid = null;
+                authUserGlobal = null; // Limpiar el objeto user
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+
+                document.getElementById('auth-entry').classList.add('active'); // Muestra la pantalla de inicio de sesión
+                document.getElementById('auth-entry').style.display = 'block'; // Asegura que se vea
+                document.getElementById('selectUserName').style.display = 'none'; // Asegura que se oculte
+                document.getElementById('main-menu').style.display = 'none';
+            }
+        });
+
+
+        function cerrarSesion() {
+            signOut(auth).then(() => {
+                alert("Sesión cerrada.");
+                // onAuthStateChanged se encargará de resetear la UI a la pantalla de entrada
+            }).catch((error) => {
+                console.error("Error al cerrar sesión:", error);
+                alert("Error al cerrar sesión.");
+            });
+        }
+
+        // ** FUNCIONES DE PUBLICACIONES Y COMENTARIOS (usan las variables y funciones globales de Firebase) **
+        function crearElementoComentario(texto, autor, likes = 0, dislikes = 0) {
+            const div = document.createElement('div');
+            div.className = 'comment';
+            div.innerHTML = `
+                <strong>${autor}</strong>: ${texto}
+                <div class='like-dislike'>
+                    <button onclick="darLikeDislike(this, 'like')">👍 <span>${likes}</span></button>
+                    <button onclick="darLikeDislike(this, 'dislike')">👎 <span>${dislikes}</span></button>
+                </div>
+                <div class='comment-input-area'>
+                    <textarea placeholder='Escribe una respuesta...'></textarea>
+                    <button onclick='comentar(this)'>Responder</button>
+                </div>
+                <button class="toggle-replies-button" onclick="toggleRespuestas(this)" style="display:none;">Mostrar respuestas (0)</button>
+                <div class='nested-comments hidden'></div>
+            `;
+            return div;
+        }
+
+        async function publicar() {
+            if (!window.usuarioActual) {
+                alert("Debes iniciar sesión para publicar.");
+                return;
+            }
+
+            const partido = document.getElementById('partido').value;
+            const apuesta = document.getElementById('apuesta').value;
+            const hora = document.getElementById('hora').value;
+            const fecha = document.getElementById('fecha').value;
+            const comentario = document.getElementById('comentario').value;
+
+            if (!partido || !apuesta || !hora || !fecha || !comentario) {
+                alert("Por favor, completa todos los campos de la publicación.");
+                return;
+            }
+
+            try {
+                // Añadimos tanto autorUid como uid (por compatibilidad con reglas que esperen 'uid')
+                await addDoc(collection(db, "publicaciones"), {
+                    autor: window.usuarioActual,
+                    autorUid: window.usuarioAuthId,
+                    uid: window.usuarioAuthId,
+                    partido: partido,
+                    apuesta: apuesta,
+                    hora: hora,
+                    fecha: fecha,
+                    comentario: comentario,
+                    likes: 0,
+                    dislikes: 0,
+                    timestamp: serverTimestamp()
+                });
+
+                document.getElementById('partido').value = '';
+                document.getElementById('apuesta').value = '';
+                document.getElementById('hora').value = '';
+                document.getElementById('fecha').value = '';
+                document.getElementById('comentario').value = '';
+
+            } catch (e) {
+                console.error("Error al añadir publicación a Firestore: ", e);
+                alert("Hubo un error al publicar. Inténtalo de nuevo.");
+            }
+        }
+
+        async function comentar(btn) {
+            if (!window.usuarioActual) {
+                alert("Debes iniciar sesión para comentar.");
+                return;
+            }
+
+            const texto = btn.previousElementSibling.value;
+            if (!texto) return;
+
+            const postElement = btn.closest('.post');
+            const postId = postElement.dataset.id;
+
+            if (!postId) {
+                console.error("No se encontró el ID de la publicación para el comentario.");
+                alert("No se pudo asociar el comentario a una publicación.");
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, "publicaciones", postId, "comentarios"), {
+                    autor: window.usuarioActual,
+                    autorUid: window.usuarioAuthId,
+                    uid: window.usuarioAuthId,
+                    texto: texto,
+                    likes: 0,
+                    dislikes: 0,
+                    timestamp: serverTimestamp()
+                });
+                btn.previousElementSibling.value = '';
+            } catch (e) {
+                console.error("Error al añadir comentario a Firestore: ", e);
+                alert("Hubo un error al comentar. Inténtalo de nuevo.");
+            }
+        }
+
+        async function darLikeDislike(btn, tipo) {
+            if (!window.usuarioActual) {
+                alert("Debes iniciar sesión para dar 'Me gusta' o 'No me gusta'.");
+                return;
+            }
+
+            const elemento = btn.closest('.post, .comment');
+            if (!elemento) return;
+
+            const elementoId = elemento.dataset.id;
+            if (!elementoId) {
+                console.error("ID del elemento no encontrado para like/dislike.");
+                return;
+            }
+
+            let docRefPath;
+            if (elemento.classList.contains('post')) {
+                docRefPath = `publicaciones/${elementoId}`;
+            } else if (elemento.classList.contains('comment')) {
+                const postId = elemento.closest('.post').dataset.id;
+                docRefPath = `publicaciones/${postId}/comentarios/${elementoId}`;
+            } else {
+                console.error("Tipo de elemento desconocido para like/dislike.");
+                return;
+            }
+
+            const key = `${window.usuarioAuthId}_${elementoId}`;
+            const estadoPrevio = window.likes.get(key);
+
+            let currentLikes = parseInt(elemento.querySelector('[onclick*="darLikeDislike(this, \'like\')] span').textContent);
+            let currentDislikes = parseInt(elemento.querySelector('[onclick*="darLikeDislike(this, \'dislike\')] span').textContent);
+
+            let newLikes = currentLikes;
+            let newDislikes = currentDislikes;
+
+            if (estadoPrevio === tipo) {
+                window.likes.delete(key);
+                if (tipo === 'like') {
+                    newLikes--;
+                } else {
+                    newDislikes--;
+                }
+            } else {
+                if (estadoPrevio === 'like') {
+                    newLikes--;
+                } else if (estadoPrevio === 'dislike') {
+                    newDislikes--;
+                }
+                window.likes.set(key, tipo);
+                if (tipo === 'like') {
+                    newLikes++;
+                } else {
+                    newDislikes++;
+                }
+            }
+
+            try {
+                await updateDoc(doc(db, docRefPath), {
+                    likes: newLikes,
+                    dislikes: newDislikes
+                });
+            } catch (e) {
+                console.error("Error al actualizar likes/dislikes en Firestore:", e);
+                alert("Hubo un error al procesar tu like/dislike. Inténtalo de nuevo.");
+                if (estadoPrevio) {
+                    window.likes.set(key, estadoPrevio);
+                } else {
+                    window.likes.delete(key);
+                }
+            }
+        }
+
+        async function borrar(btn) {
+            if (!window.usuarioActual) {
+                alert("Debes iniciar sesión para borrar.");
+                return;
+            }
+
+            const post = btn.closest('.post');
+            const postId = post.dataset.id;
+
+            const autorUidPublicacion = post.dataset.autorUid;
+
+            if (autorUidPublicacion !== window.usuarioAuthId) {
+                alert("Solo puedes borrar tus propias publicaciones.");
+                return;
+            }
+
+            if (confirm("¿Estás seguro de que quieres borrar esta publicación y todos sus comentarios?")) {
+                try {
+                    await deleteDoc(doc(db, "publicaciones", postId));
+                    console.log("Publicación borrada con éxito de Firestore.");
+                } catch (e) {
+                    console.error("Error al borrar publicación de Firestore:", e);
+                    alert("Hubo un error al borrar la publicación. Inténtalo de nuevo.");
+                }
+            }
+        }
+
+        // ** LÓGICA PARA CARGAR Y ACTUALIZAR LA UI EN TIEMPO REAL **
+
+        function cargarPublicaciones() {
+            const publicacionesDiv = document.getElementById('publicaciones');
+            publicacionesDiv.innerHTML = '';
+
+            const q = query(collection(db, "publicaciones"), orderBy("timestamp", "desc"));
+
+            onSnapshot(q, (snapshot) => {
+                publicacionesDiv.innerHTML = '';
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const postId = doc.id;
+
+                    const div = document.createElement('div');
+                    div.className = 'post';
+                    div.dataset.id = postId;
+                    div.dataset.autorUid = data.autorUid || data.uid || '';
+
+                    div.innerHTML = `
+                        <strong onclick="verPerfil('${data.autor}')" style="cursor:pointer;color:var(--accent-color)">${data.autor}</strong>: ${data.partido} - ${data.apuesta}<br>${data.fecha} ${data.hora}<br>${data.comentario}
+                        <div class='like-dislike'>
+                            <button onclick="darLikeDislike(this, 'like')">👍 <span>${data.likes || 0}</span></button>
+                            <button onclick="darLikeDislike(this, 'dislike')">👎 <span>${data.dislikes || 0}</span></button>
+                        </div>
+                        <div class='comment-section'>
+                            <textarea placeholder='Escribe un comentario...'></textarea>
+                            <button onclick='comentar(this)'>Comentar</button>
+                            <button class="toggle-comments-button" onclick="toggleComentariosPrincipales(this)">Mostrar comentarios (0)</button>
+                            <div class='main-comments hidden'></div>
+                        </div>
+                        <div class='edit-delete'>
+                            ${window.usuarioAuthId === data.autorUid ? `<button onclick='borrar(this)'>🗑️</button>` : ''}
+                        </div>
+                    `;
+                    publicacionesDiv.appendChild(div);
+
+                    cargarComentarios(postId, div.querySelector('.main-comments'), div.querySelector('.toggle-comments-button'));
+                });
+            }, (error) => {
+                console.error("Error al cargar publicaciones:", error);
+            });
+        }
+
+        function cargarComentarios(postId, commentsContainer, toggleButton) {
+            const qComments = query(collection(db, "publicaciones", postId, "comentarios"), orderBy("timestamp", "asc"));
+
+            onSnapshot(qComments, (snapshot) => {
+                commentsContainer.innerHTML = '';
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const commentId = doc.id;
+
+                    const div = crearElementoComentario(data.texto, data.autor, data.likes || 0, data.dislikes || 0);
+                    div.dataset.id = commentId;
+                    commentsContainer.appendChild(div);
+                });
+
+                const numComments = commentsContainer.children.length;
+                if (numComments > 0) {
+                    toggleButton.style.display = 'block';
+                    if (commentsContainer.classList.contains('hidden')) {
+                        toggleButton.textContent = `Mostrar comentarios (${numComments})`;
+                    } else {
+                        toggleButton.textContent = `Ocultar comentarios (${numComments})`;
+                    }
+                } else {
+                    toggleButton.style.display = 'none';
+                }
+            }, (error) => {
+                console.error("Error al cargar comentarios:", error);
+            });
+        }
+
+        // ** FUNCIONES DE TOGGLE **
+        function toggleComentariosPrincipales(btn) {
+            const post = btn.closest('.post');
+            const mainCommentsDiv = post.querySelector('.main-comments');
+            if (mainCommentsDiv.classList.contains('hidden')) {
+                mainCommentsDiv.classList.remove('hidden');
+                btn.textContent = `Ocultar comentarios (${mainCommentsDiv.children.length})`;
+            } else {
+                mainCommentsDiv.classList.add('hidden');
+                btn.textContent = `Mostrar comentarios (${mainCommentsDiv.children.length})`;
+            }
+        }
+
+        function toggleRespuestas(btn) {
+            const comment = btn.closest('.comment');
+            const nestedCommentsDiv = comment.querySelector('.nested-comments');
+            if (nestedCommentsDiv.classList.contains('hidden')) {
+                nestedCommentsDiv.classList.remove('hidden');
+                btn.textContent = `Mostrar respuestas (${nestedCommentsDiv.children.length})`;
+            } else {
+                nestedCommentsDiv.classList.add('hidden');
+                btn.textContent = `Ocultar respuestas (${nestedCommentsDiv.children.length})`;
+            }
+        }
+
+        // Adjuntar las funciones que necesitan ser accesibles globalmente al objeto window
+        window.toggleModo = toggleModo;
+        window.mostrarSeccion = mostrarSeccion;
+        window.verPerfil = verPerfil;
+        window.mostrarNotificaciones = mostrarNotificaciones;
+        window.buscar = buscar;
+        window.guardarDescripcion = guardarDescripcion;
+        window.toggleSeguir = toggleSeguir;
+        window.signInWithGoogle = signInWithGoogle; // Ahora la única opción de login/registro
+        window.saveChosenUserName = saveChosenUserName; // Nueva función para guardar el nombre de usuario
+        window.cerrarSesion = cerrarSesion;
+        window.publicar = publicar;
+        window.comentar = comentar;
+        window.darLikeDislike = darLikeDislike;
+        window.borrar = borrar;
+        window.toggleComentariosPrincipales = toggleComentariosPrincipales;
+        window.toggleRespuestas = toggleRespuestas;
+        window.cargarPublicaciones = cargarPublicaciones;
+
+    </script>
+
 </body>
 
 </html>
